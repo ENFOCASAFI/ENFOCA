@@ -90,6 +90,7 @@ class PLEReport08(models.Model) :
 		lines_to_write_03 = []
 		bills = self.bill_ids.sudo()
 		peru = self.env.ref('base.pe')
+		contador = 1
 		for move in bills :
 			m_01 = []
 			try :
@@ -110,9 +111,10 @@ class PLEReport08(models.Model) :
 				m_01.extend([
 					invoice_date.strftime('%Y%m00'),
 					str(move_id),
-					('M'+str(move_id).rjust(9,'0')),
+					('M'+str(1).rjust(9,'0')),
 					invoice_date.strftime('%d/%m/%Y'),
 				])
+				contador = contador + 1
 				#5
 				if date_due :
 					m_01.append(date_due.strftime('%d/%m/%Y'))

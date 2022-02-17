@@ -60,7 +60,7 @@ class PLEReport14(models.Model) :
 			('company_id','=',self.company_id.id),
 			('company_id.partner_id.country_id','=',invoices),
 			('move_type','in',['out_invoice','out_refund']),
-			('state','in',['posted', 'annul']),
+			('state','in',['posted', 'annul', 'cancel']),
 			('invoice_date','>=',str(start)),
 			('invoice_date','<=',str(end)),
 		]
@@ -73,6 +73,7 @@ class PLEReport14(models.Model) :
 		lines_to_write = []
 		lines_to_write_2 = []
 		invoices = self.invoice_ids.sudo()
+		contador = 1
 		for move in invoices :
 			m_1 = []
 			try :
@@ -89,10 +90,11 @@ class PLEReport14(models.Model) :
 				#m_1.extend([periodo.strftime('%Y%m00'), str(number), ('A'+str(number).rjust(9,'0')), invoice.invoice_date.strftime('%d/%m/%Y')])
 				m_1.extend([
 					invoice_date.strftime('%Y%m00'),
-					str(move_id),
-					('M'+str(move_id).rjust(9,'0')),
+					str(move.l10n_latam_document_number),
+					('M'+str(1).rjust(9,'0')),
 					invoice_date.strftime('%d/%m/%Y'),
 				])
+				contador = contador + 1
 				#5
 				"""
 				1. Obligatorio, excepto cuando el campo 35 = '2'
@@ -143,7 +145,10 @@ class PLEReport14(models.Model) :
 				else :
 					m_1.extend(['', '', '', ''])
 				#32-36
-				m_1.extend(['', '', '', '1', ''])
+				estado_comprobante = '1'
+				if move.state in ["annul", "cancel"]:
+					estado_comprobante = '2'
+				m_1.extend(['', '', '', estado_comprobante, ''])
 			except Exception as e:
 				_logging.info('error en lineaaaaaaaaaaaaaa66666666666 2253')
 				_logging.info(e)
