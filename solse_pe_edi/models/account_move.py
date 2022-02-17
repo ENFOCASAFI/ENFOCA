@@ -69,8 +69,16 @@ class AccountMove(models.Model):
 			reg.tiene_retencion = datos['tiene_retencion']
 			reg.monto_retencion = datos['monto_retencion']
 			reg.monto_retencion_base = datos['monto_retencion_base']
-			reg.monto_neto_pagar = abs(reg.amount_total_signed) - reg.monto_detraccion - reg.monto_retencion
-			reg.monto_neto_pagar_base = abs(reg.amount_total) - reg.monto_detraccion_base - reg.monto_retencion_base
+			monto_neto_pagar = abs(reg.amount_total_signed) - reg.monto_detraccion - reg.monto_retencion
+			monto_neto_pagar_base = abs(reg.amount_total) - reg.monto_detraccion_base - reg.monto_retencion_base
+
+			if reg.currency_id.id != reg.company_id.currency_id.id:
+				reg.monto_neto_pagar = monto_neto_pagar
+				reg.monto_neto_pagar_base = monto_neto_pagar_base
+			else:
+				reg.monto_neto_pagar = round(monto_neto_pagar)
+				reg.monto_neto_pagar_base = round(monto_neto_pagar_base)
+
 			if reg.tiene_detraccion:
 				reg.pe_sunat_transaction51 = '1001'
 			else:
@@ -90,15 +98,21 @@ class AccountMove(models.Model):
 			reg.tiene_retencion = datos['tiene_retencion']
 			reg.monto_retencion = datos['monto_retencion']
 			reg.monto_retencion_base = datos['monto_retencion_base']
-			reg.monto_neto_pagar = abs(reg.amount_total_signed) - reg.monto_detraccion - reg.monto_retencion
-			reg.monto_neto_pagar_base = abs(reg.amount_total) - reg.monto_detraccion_base - reg.monto_retencion_base
+			monto_neto_pagar = abs(reg.amount_total_signed) - reg.monto_detraccion - reg.monto_retencion
+			monto_neto_pagar_base = abs(reg.amount_total) - reg.monto_detraccion_base - reg.monto_retencion_base
+
+			if reg.currency_id.id != reg.company_id.currency_id.id:
+				reg.monto_neto_pagar = monto_neto_pagar
+				reg.monto_neto_pagar_base = monto_neto_pagar_base
+			else:
+				reg.monto_neto_pagar = round(monto_neto_pagar)
+				reg.monto_neto_pagar_base = round(monto_neto_pagar_base)
+
 			if reg.tiene_detraccion:
 				reg.pe_sunat_transaction51 = '1001'
 			else:
 				reg.pe_sunat_transaction51 = '0101'
-		
-
-
+	
 	def _get_l10n_latam_documents_domain(self):
 		self.ensure_one()
 		if self.move_type in ['out_refund', 'in_refund']:
@@ -156,6 +170,8 @@ class AccountMove(models.Model):
 			monto_detraccion = round(monto_detraccion)
 			monto_detraccion_base = abs(self.amount_total) * (detraccion_id.value / 100.0) if detraccion_id.value > 0 else 0.0
 			#monto_detraccion_base = round(monto_detraccion_base)
+			if self.currency_id.id == self.company_id.currency_id.id:
+				monto_detraccion_base = round(monto_detraccion_base)
 			datos_rpt = {
 				"tiene_detraccion": True,
 				"detraccion_id": detraccion_id.code,
@@ -175,6 +191,8 @@ class AccountMove(models.Model):
 		monto_retencion = round(monto_retencion)
 		monto_retencion_base = abs(self.amount_total) * (self.porc_retencion / 100.0)
 		#monto_retencion_base = round(monto_retencion_base)
+		if self.currency_id.id == self.company_id.currency_id.id:
+			monto_retencion_base = round(monto_retencion_base)
 		if self.company_id.agente_retencion and self.move_type in ['in_invoice', 'in_refund']:
 			datos_rpt = {
 				"tiene_detraccion": False,
