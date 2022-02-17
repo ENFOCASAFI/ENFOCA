@@ -20,7 +20,7 @@
                     <button name="agregegar_a_resumen" string="Agregar a resumen" type="object" attrs="{'invisible':[('is_cpe', '=', False)]}" groups="base.group_no_one" />
                 </xpath> 
                 <xpath expr="//button[@name='button_cancel']" position="attributes">
-                    <attribute name="invisible">1</attribute>
+                    <attribute name="attrs">{'invisible' : ['|', '|', ('id', '=', False), ('state', '!=', 'draft'), ('is_cpe', '=', True)]}</attribute>
                 </xpath>
 
 
