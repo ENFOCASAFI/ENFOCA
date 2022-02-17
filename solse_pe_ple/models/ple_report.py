@@ -92,6 +92,8 @@ class PLEReportTempl(models.Model) :
 	ple_xls_01_filename = fields.Char(string='Nombre del Excel')
 	year = fields.Integer(string='Año', default=lambda self: self._get_default_year())
 	year_char = fields.Char(string='Año (texto)', compute='_compute_year_char')
+	
+	
 	month = fields.Selection(
 		string='Mes', selection=[
 			('1','Enero'),

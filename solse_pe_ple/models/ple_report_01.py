@@ -58,8 +58,6 @@ class PLEReport01(models.Model) :
 		#end = end - current_offset
 		domain_company = []
 		empresas = self.env['res.company'].sudo().search([])
-		_logging.info('cantidad de empresas:')
-		_logging.info(empresas)
 		if len(empresas) > 1:
 			domain_company = [('company_id','=',self.company_id.id), ('company_id.partner_id.country_id','=',pais_id)]
 		pais_id = self.env.ref('base.pe').id
@@ -72,11 +70,7 @@ class PLEReport01(models.Model) :
 			('display_type','not in',['line_section','line_note']),
 		]
 		paremtros_buscar = domain_company + lines
-		_logging.info('parametros de busqueda')
-		_logging.info(paremtros_buscar)
 		lines = self.env[self.line_ids._name].search(paremtros_buscar, order='date asc')
-		_logging.info('lineas obtenidas::::')
-		_logging.info(lines)
 		self.line_ids = lines
 		return res
 	

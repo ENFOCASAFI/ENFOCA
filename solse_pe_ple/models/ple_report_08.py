@@ -30,9 +30,9 @@ class PLEReport08(models.Model) :
 	ple_xls_01_filename = fields.Char(string='Nombre del Excel 8.1')
 
 	ple_txt_02 = fields.Text(string='Contenido del TXT 8.2')
-	ple_txt_02_binary = fields.Binary(string='TXT 8.2')
+	ple_txt_02_binary = fields.Binary(string='TXT 8.2', readonly=True)
 	ple_txt_02_filename = fields.Char(string='Nombre del TXT 8.2')
-	ple_xls_02_binary = fields.Binary(string='Excel 8.2')
+	ple_xls_02_binary = fields.Binary(string='Excel 8.2', readonly=True)
 	ple_xls_02_filename = fields.Char(string='Nombre del Excel 8.2')
 
 	ple_txt_03 = fields.Text(string='Contenido del TXT 8.3')
@@ -40,6 +40,8 @@ class PLEReport08(models.Model) :
 	ple_txt_03_filename = fields.Char(string='Nombre del TXT 8.3')
 	ple_xls_03_binary = fields.Binary(string='Excel 8.3', readonly=True)
 	ple_xls_03_filename = fields.Char(string='Nombre del Excel 8.3')
+
+	documento_compra_ids = fields.Many2many('l10n_latam.document.type', 'ple_report_l10n_latam_id', 'report_id', 'doc_id', string='Documentos a incluir', required=False, domain="[('sub_type', 'in', ['purchase'])]")
 	
 	def get_default_filename(self, ple_id='080100', tiene_datos=False) :
 		name = super().get_default_filename()
@@ -62,6 +64,10 @@ class PLEReport08(models.Model) :
 		#current_offset = fields.Datetime.context_timestamp(self, fields.Datetime.now()).utcoffset()
 		#start = start - current_offset
 		#end = end - current_offset
+		doc_type_ids = []
+		for reg in self.documento_compra_ids:
+			doc_type_ids.append(reg.id)
+
 		bills = self.env.ref('base.pe').id
 		bills = [
 			('company_id','=',self.company_id.id),
@@ -71,6 +77,8 @@ class PLEReport08(models.Model) :
 			('invoice_date','>=',str(start)),
 			('invoice_date','<=',str(end)),
 		]
+		if self.documento_compra_ids:
+			bills.append(('l10n_latam_document_type_id', 'in', doc_type_ids))
 		bills = self.env[self.bill_ids._name].search(bills, order='invoice_date asc, ref asc')
 		self.bill_ids = bills
 		return res
@@ -91,7 +99,7 @@ class PLEReport08(models.Model) :
 				sunat_partner_code = move.partner_id.l10n_latam_identification_type_id.l10n_pe_vat_code
 				sunat_partner_vat = move.partner_id.vat
 				sunat_partner_name = move.partner_id.legal_name or move.partner_id.name
-				move_id = move.id
+				move_id = move.l10n_latam_document_number
 				invoice_date = move.invoice_date
 				date_due = move.invoice_date_due
 				amount_untaxed = move.amount_untaxed
@@ -134,20 +142,31 @@ class PLEReport08(models.Model) :
 				#24-26
 				m_01.extend([format(amount_total, '.2f'), '', ''])
 				#27-31
-				if sunat_code in ['07', '08'] :
-					"""origin = (sunat_code == '07') and move.credit_origin_id or move.debit_origin_id
+				# notas credito
+				if sunat_code in ['07'] :
+					origin = move.reversed_entry_id
 					origin_number = origin.ref
-					origin_number = origin_number and ('-' in origin_number) and origin_number.split('-') or ['', '']"""
-					#m_01.extend([origin.invoice_date.strftime('%d/%m/%Y'), origin.pe_invoice_code])
-					m_01.extend(["01/07/2021", "01"])
-					#m_01.extend([origin_number[0], '', origin_number[1]])
-					m_01.extend(['FC00', '', '00000001'])
+					origin_number = origin_number and ('-' in origin_number) and origin_number.split('-') or ['', '']
+					m_01.extend([origin.invoice_date.strftime('%d/%m/%Y'), origin.pe_invoice_code])
+					m_01.append(origin_number[0])
+					m_01.append('')
+					m_01.append(origin_number[1])
+				# notas debito
+				elif sunat_code in ['08'] :
+					origin = move.debit_origin_id
+					origin_number = origin.ref
+					origin_number = origin_number and ('-' in origin_number) and origin_number.split('-') or ['', '']
+					m_01.extend([origin.invoice_date.strftime('%d/%m/%Y'), origin.pe_invoice_code])
+					m_01.append(origin_number[0])
+					m_01.append('')
+					m_01.append(origin_number[1])
 				else :
 					m_01.extend(['', '', '', '', ''])
 				#32-43
 				m_01.extend(['', '', '', '', '', '', '', '', '', '', '1', ''])
-			except :
+			except Exception as e:
 				_logging.info('error en lineaaaaaaaaaaaaaa 1754')
+				_logging.info(e)
 				m_01 = []
 			if m_01 :
 				lines_to_write_01.append('|'.join(m_01))

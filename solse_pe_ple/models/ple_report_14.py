@@ -60,7 +60,7 @@ class PLEReport14(models.Model) :
 			('company_id','=',self.company_id.id),
 			('company_id.partner_id.country_id','=',invoices),
 			('move_type','in',['out_invoice','out_refund']),
-			('state','=',['posted', 'annul']),
+			('state','in',['posted', 'annul']),
 			('invoice_date','>=',str(start)),
 			('invoice_date','<=',str(end)),
 		]
@@ -126,9 +126,17 @@ class PLEReport14(models.Model) :
 				#25-27
 				m_1.extend([format(move.amount_total, '.2f'), '', ''])
 				#28-31
-				if sunat_code in ['07', '08'] :
-					origin = (sunat_code == '07') and move.credit_origin_id or move.debit_origin_id
-					origin_number = origin.name
+				# notas credito
+				if sunat_code in ['07'] :
+					origin = move.reversed_entry_id
+					origin_number = origin.l10n_latam_document_number
+					origin_number = origin_number and ('-' in origin_number) and origin_number.split('-') or ['', '']
+					m_1.extend([origin.invoice_date.strftime('%d/%m/%Y'), origin.pe_invoice_code])
+					m_1.extend(origin_number)
+				# notas debito
+				elif sunat_code in ['08'] :
+					origin = move.debit_origin_id
+					origin_number = origin.l10n_latam_document_number
 					origin_number = origin_number and ('-' in origin_number) and origin_number.split('-') or ['', '']
 					m_1.extend([origin.invoice_date.strftime('%d/%m/%Y'), origin.pe_invoice_code])
 					m_1.extend(origin_number)
