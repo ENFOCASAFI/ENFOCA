@@ -71,15 +71,18 @@ class AccountMove(models.Model):
 					'exclude_from_invoice_tab': True,
 				}))
 
-			diario_aplicar = self.env["account.journal"].search([("type", "=", "general")], limit=1)
-			paramtros_retencion = {
-				"move_type": "entry",
-				"journal_id": diario_aplicar.id,
-				"line_ids": lineas_crear,
+			datos_factura = {
+				'journal_id': invoice_id.journal_id.id,
+				'company_id': invoice_id.company_id.id,
+				'move_type': 'in_invoice',
+				'partner_id': self.contacto_asignado.id or contacto_defecto.id,
+				"provision_id": self.id,
+				'es_por_provision': True,
+				'tipo_cuota': 'factura',
+				'es_por_cuota': False,
+				'invoice_line_ids': lineas_crear,
 			}
-			factura_retencion = self.env['account.move'].create(paramtros_retencion)
-			factura_retencion.action_post()
-			invoice_id.asiento_det_ret = factura_retencion.id
+			invoice_id.line_ids = lineas_crear
 
 	def agregar_movimiento_detraccion(self):
 		invoice_id = self
@@ -136,14 +139,4 @@ class AccountMove(models.Model):
 					'amount_currency': invoice_id.monto_detraccion_base * -1,
 					'exclude_from_invoice_tab': True,
 				}))
-
-			diario_aplicar = self.env["account.journal"].search([("type", "=", "general")], limit=1)
-			paramtros_detraccion = {
-				"move_type": "entry",
-				"journal_id": diario_aplicar.id,
-				"line_ids": lineas_crear,
-			}
-			factura_detraccion = self.env['account.move'].create(paramtros_detraccion)
-			factura_detraccion.action_post()
-			invoice_id.asiento_det_ret = factura_detraccion.id
-			#invoice_id.line_ids = lineas_crear
+			invoice_id.line_ids = lineas_crear

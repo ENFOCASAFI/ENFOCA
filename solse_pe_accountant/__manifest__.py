@@ -12,7 +12,7 @@
 	'author': "F & M Solutions Service S.A.C",
 	'website': "https://www.solse.pe",
 	'category': 'Financial',
-	'version': '0.3',
+	'version': '0.4.1',
 
 	'depends': [
 		'account',
@@ -21,6 +21,7 @@
 	'data': [
 		'views/res_config_settings_view.xml',
 		'views/account_move_view.xml',
+		'wizard/account_payment_register_views.xml',
 	],
 	'installable': True,
 	'price': 690,

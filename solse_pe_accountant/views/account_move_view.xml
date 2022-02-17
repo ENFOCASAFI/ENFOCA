@@ -19,6 +19,9 @@
                         string="Agregar detracción">
                 </button>
             </xpath> 
+            <xpath expr="//field[@name='to_check']" position="after">
+                <field name="asiento_det_ret" readonly="1" />
+            </xpath>
         </field>
     </record>
 
