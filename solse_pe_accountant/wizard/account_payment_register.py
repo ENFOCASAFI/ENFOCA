@@ -62,5 +62,5 @@ class AccountPaymentRegister(models.TransientModel):
 			if self.es_detraccion_retencion:
 				self.amount = factura.monto_detraccion_base + factura.monto_retencion_base
 			else:
-				amount_residual_currency = abs(factura.amount_residual_currency)
-				self.amount = amount_residual_currency - factura.monto_detraccion_base - factura.monto_retencion_base
+				amount_residual_signed = abs(factura.amount_residual_signed)
+				self.amount = amount_residual_signed - factura.monto_detraccion_base - factura.monto_retencion_base
