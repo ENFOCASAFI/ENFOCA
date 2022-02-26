@@ -4,10 +4,26 @@ from odoo import models, fields, api
 import logging
 _logging = logging.getLogger(__name__)
 
+class AccountPayment(models.Model):
+	_inherit = 'account.payment'
+
+	transaction_number = fields.Char(string='Número de operación')
+
+class AccountMoveLine(models.Model):
+	_inherit = 'account.move.line'
+
+	transaction_number = fields.Char(related='payment_id.transaction_number', store=True)
+
+class StatementLine(models.Model):
+    _inherit = 'account.bank.statement.line'
+
+    transaction_number = fields.Char(string='Número de transacción')
+
 
 class AccountMove(models.Model):
 	_inherit = 'account.move'
 
+	transaction_number = fields.Char(related='payment_id.transaction_number', store=True)
 	asiento_det_ret = fields.Many2one('account.move', string='Asiento retención/detracción')
 
 	def _post(self, soft=True):

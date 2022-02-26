@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
     <record id="view_move_form_or" model="ir.ui.view">
         <field name="name">account.move.form.edi</field>
         <field name="model">account.move</field>
@@ -22,7 +23,58 @@
             <xpath expr="//field[@name='to_check']" position="after">
                 <field name="asiento_det_ret" readonly="1" />
             </xpath>
+
+            <xpath expr="//group[@id='header_right_group']" position="inside">
+                <field name="transaction_number" attrs="{'invisible': [('move_type', 'not in', ('entry'))]}"/>
+            </xpath>
+            <xpath expr="//field[@name='payment_reference']" position="after">
+                <field name="transaction_number" attrs="{'invisible': [('move_type', 'not in', ('entry'))]}"/>
+            </xpath>
+
         </field>
     </record>
+
+    <record id="view_bank_statement_form" model="ir.ui.view">
+        <field name="name">account.bank.statement.inherit.view.form</field>
+        <field name="model">account.bank.statement</field>
+        <field name="inherit_id" ref="account.view_bank_statement_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='line_ids']/tree/field[@name='amount_currency']" position="after">
+                <field name="transaction_number" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_bank_statement_line_search" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.inherit.view.search</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="inherit_id" ref="account.view_bank_statement_line_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='transaction_type']" position="after">
+                <field name="transaction_number"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_account_payment_form" model="ir.ui.view">
+        <field name="name">account.payment.inherit.view.form</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ref']" position="after">
+                <field name="transaction_number"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_account_reconcile_model_form" model="ir.ui.view">
+        <field name="name">account.reconcile.model.inherit.view.form</field>
+        <field name="model">account.reconcile.model</field>
+        <field name="inherit_id" ref="account.view_account_reconcile_model_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='match_text_location_reference']" position="after">
+                <label for="match_text_location_transaction_number" string="Transaction Number"/>
+                <field name="match_text_location_transaction_number"/>
+            </xpath>
+        </field>
+    </record>
+
 
 </odoo>

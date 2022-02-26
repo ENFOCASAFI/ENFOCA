@@ -9,46 +9,34 @@ class AccountPaymentRegister(models.TransientModel):
 	_inherit = 'account.payment.register'
 
 	es_detraccion_retencion = fields.Boolean("Es por Detracción/Retención", help="Marcar si el pago es por la detracción o retención")
+	communication = fields.Char(string="Memo", store=True, readonly=False, compute='_compute_communication_2')
+	transaction_number = fields.Char(string='Número de operación')
 
-
-	@api.depends('can_edit_wizard')
-	def _compute_communication(self):
+	@api.depends('can_edit_wizard', 'line_ids')
+	def _compute_communication_2(self):
 		for wizard in self:
 			if wizard.can_edit_wizard:
-				batches = wizard._get_batches()
-				dato = wizard._get_batch_communication(batches[0])
-				partes = dato.split(" ")
-				dato = dato if len(partes) == 1 else dato[1]
-				wizard.communication = dato
+				factura = wizard.line_ids[0].move_id
+				if factura:
+					dato = factura.name
+					partes = dato.split(" ")
+					dato = partes[1] if len(partes) == 2 else partes[0]
+					wizard.communication = dato
+				else:
+					batches = wizard._get_batches()
+					wizard.communication = wizard._get_batch_communication(batches[0])
+
 			else:
-				wizard.communication = False
+				factura = wizard.line_ids[0].move_id
+				if factura:
+					dato = factura.name
+					partes = dato.split(" ")
+					dato = dato if len(partes) == 1 else dato[1]
+					wizard.communication = dato
+				else:
+					wizard.communication = False
 
-	@api.model
-	def _get_wizard_values_from_batch(self, batch_result):
-		key_values = batch_result['key_values']
-		lines = batch_result['lines']
-		company = lines[0].company_id
-		factura = lines[0].move_id
-
-		source_amount = abs(sum(lines.mapped('amount_residual')))
-		source_amount = source_amount - factura.monto_detraccion - factura.monto_retencion
-		if key_values['currency_id'] == company.currency_id.id:
-			source_amount_currency = source_amount
-		else:
-			source_amount_currency = abs(sum(lines.mapped('amount_residual_currency')))
-			source_amount_currency = source_amount_currency - factura.monto_detraccion_base - factura.monto_retencion_base
-
-		return {
-			'company_id': company.id,
-			'partner_id': key_values['partner_id'],
-			'partner_type': key_values['partner_type'],
-			'payment_type': key_values['payment_type'],
-			'source_currency_id': key_values['currency_id'],
-			'source_amount': source_amount,
-			'source_amount_currency': source_amount_currency,
-		}
-
-	@api.onchange('es_detraccion_retencion')
+	@api.onchange('es_detraccion_retencion', 'journal_id')
 	def _onchange_detraccion_retencion(self):
 		factura = self.line_ids[0].move_id
 		self.payment_difference_handling = "open"
@@ -56,11 +44,18 @@ class AccountPaymentRegister(models.TransientModel):
 			if self.es_detraccion_retencion:
 				self.amount = factura.monto_detraccion + factura.monto_retencion
 			else:
-				source_amount = abs(factura.amount_residual)
+				#source_amount = abs(factura.amount_residual)
+				source_amount = self.source_amount
 				self.amount = source_amount - factura.monto_detraccion - factura.monto_retencion
 		else:
 			if self.es_detraccion_retencion:
 				self.amount = factura.monto_detraccion_base + factura.monto_retencion_base
 			else:
-				amount_residual_signed = abs(factura.amount_residual_signed)
-				self.amount = amount_residual_signed - factura.monto_detraccion_base - factura.monto_retencion_base
+				#amount_residual_signed = abs(factura.amount_residual_signed)
+				source_amount_currency = self.source_amount_currency
+				self.amount = source_amount_currency - factura.monto_detraccion_base - factura.monto_retencion_base
+
+	def _create_payment_vals_from_wizard(self):
+		payment_vals = super(AccountPaymentRegister, self)._create_payment_vals_from_wizard()
+		payment_vals['transaction_number'] = self.transaction_number
+		return payment_vals

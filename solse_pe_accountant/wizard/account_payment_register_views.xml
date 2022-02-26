@@ -8,6 +8,9 @@
             <xpath expr="//field[@name='communication']" position="after">
                 <field name="es_detraccion_retencion" />
             </xpath>
+            <xpath expr="//field[@name='partner_bank_id']" position="after">
+                <field name="transaction_number"/>
+            </xpath>
         </field>
     </record>
 
