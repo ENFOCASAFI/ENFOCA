@@ -25,6 +25,7 @@ class AccountMove(models.Model):
 
 	transaction_number = fields.Char(related='payment_id.transaction_number', store=True)
 	asiento_det_ret = fields.Many2one('account.move', string='Asiento retención/detracción')
+	pago_detraccion = fields.Many2one('account.payment', 'Pago de Detracción/Retención')
 
 	def _post(self, soft=True):
 		res = super(AccountMove, self)._post()

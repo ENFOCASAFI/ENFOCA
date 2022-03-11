@@ -59,3 +59,10 @@ class AccountPaymentRegister(models.TransientModel):
 		payment_vals = super(AccountPaymentRegister, self)._create_payment_vals_from_wizard()
 		payment_vals['transaction_number'] = self.transaction_number
 		return payment_vals
+
+	def _create_payments(self):
+		self.ensure_one()
+		res = super(AccountPaymentRegister, self)._create_payments()
+		factura = self.line_ids[0].move_id
+		factura.pago_detraccion = res.id
+		return res
