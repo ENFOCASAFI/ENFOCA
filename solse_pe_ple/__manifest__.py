@@ -16,6 +16,7 @@
 		'views/account_analytic_views.xml',
 		'views/res_partner_views.xml',
 		'views/account_payment_views.xml',
+		'views/account_move_view.xml',
 		'views/res_bank_views.xml',
 		'views/ple_report_views.xml',
 		'views/ple_report_01_view.xml',

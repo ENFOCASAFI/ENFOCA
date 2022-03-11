@@ -23,18 +23,21 @@ class PLEReport08(models.Model) :
 	
 	bill_ids = fields.Many2many(comodel_name='account.move', string='Compras', readonly=True)
 	
+	# Normal
 	ple_txt_01 = fields.Text(string='Contenido del TXT 8.1')
 	ple_txt_01_binary = fields.Binary(string='TXT 8.1')
 	ple_txt_01_filename = fields.Char(string='Nombre del TXT 8.1')
 	ple_xls_01_binary = fields.Binary(string='Excel 8.1')
 	ple_xls_01_filename = fields.Char(string='Nombre del Excel 8.1')
 
+	# No domiciliado
 	ple_txt_02 = fields.Text(string='Contenido del TXT 8.2')
 	ple_txt_02_binary = fields.Binary(string='TXT 8.2', readonly=True)
 	ple_txt_02_filename = fields.Char(string='Nombre del TXT 8.2')
 	ple_xls_02_binary = fields.Binary(string='Excel 8.2', readonly=True)
 	ple_xls_02_filename = fields.Char(string='Nombre del Excel 8.2')
 
+	# Simplicado
 	ple_txt_03 = fields.Text(string='Contenido del TXT 8.3')
 	ple_txt_03_binary = fields.Binary(string='TXT 8.3', readonly=True)
 	ple_txt_03_filename = fields.Char(string='Nombre del TXT 8.3')
@@ -74,12 +77,12 @@ class PLEReport08(models.Model) :
 			('company_id.partner_id.country_id','=',bills),
 			('move_type','in',['in_invoice','in_refund']),
 			('state','=','posted'),
-			('invoice_date','>=',str(start)),
-			('invoice_date','<=',str(end)),
+			('date','>=',str(start)),
+			('date','<=',str(end)),
 		]
 		if self.documento_compra_ids:
 			bills.append(('l10n_latam_document_type_id', 'in', doc_type_ids))
-		bills = self.env[self.bill_ids._name].search(bills, order='invoice_date asc, ref asc')
+		bills = self.env[self.bill_ids._name].search(bills, order='date asc, ref asc')
 		self.bill_ids = bills
 		return res
 	
@@ -91,6 +94,8 @@ class PLEReport08(models.Model) :
 		bills = self.bill_ids.sudo()
 		peru = self.env.ref('base.pe')
 		contador = 1
+		fecha_inicio = datetime.date(self.year, int(self.month), 1)
+
 		for move in bills :
 			m_01 = []
 			try :
@@ -109,7 +114,7 @@ class PLEReport08(models.Model) :
 				#1-4
 				#m_01.extend([periodo.strftime('%Y%m00'), str(number), ('A'+str(number).rjust(9,'0')), invoice.invoice_date.strftime('%d/%m/%Y')])
 				m_01.extend([
-					invoice_date.strftime('%Y%m00'),
+					move.date.strftime('%Y%m00'),
 					str(move_id),
 					('M'+str(1).rjust(9,'0')),
 					invoice_date.strftime('%d/%m/%Y'),
@@ -138,11 +143,16 @@ class PLEReport08(models.Model) :
 				else :
 					m_01.extend(['', '', ''])
 				#14-15
-				m_01.extend([format(amount_untaxed, '.2f'), format(amount_tax, '.2f')])
+				total_sin_impuestos = abs(move.amount_untaxed_signed)
+				total_impuestos = abs(move.amount_tax_signed)
+				m_01.extend([format(total_sin_impuestos, '.2f'), format(total_impuestos, '.2f')])
 				#16-23
 				m_01.extend(['', '', '', '', '', '', '0.00', '']) #ICBP
-				#24-26
-				m_01.extend([format(amount_total, '.2f'), '', ''])
+				#24
+				monto_total = abs(move.amount_total_signed)
+				m_01.extend(['', ''])
+				#25-26 (Codigo de moneda y tipo de cambio - son opcionales)
+				m_01.extend([ '', ''])
 				#27-31
 				# notas credito
 				if sunat_code in ['07'] :
@@ -164,12 +174,30 @@ class PLEReport08(models.Model) :
 					m_01.append(origin_number[1])
 				else :
 					m_01.extend(['', '', '', '', ''])
-				#32-43
-				m_01.extend(['', '', '', '', '', '', '', '', '', '', '1', ''])
+				
+				#32-33 (Datos para pago de detracciones)
+				if move.tiene_detraccion and move.pago_detraccion:
+					m_01.extend([move.pago_detraccion.date.strftime('%d/%m/%Y'), move.pago_detraccion.transaction_number])
+				else:
+					m_01.extend(['', ''])
+				#34 (Datos para pago de retencion)
+				if move.tiene_retencion:
+					m_01.extend(['1'])
+				else:
+					m_01.extend([''])
+				#35-38 
+				m_01.extend(['', '', '', ''])
+				#39-43
+				codigo = '1'
+				if invoice_date < fecha_inicio:
+					codigo = '6'
+				m_01.extend(['', '', '',codigo, ''])
+				
+				#m_01.extend(['', '', '', '', '', '', '', '', '', '', codigo, ''])
 			except Exception as e:
-				_logging.info('error en lineaaaaaaaaaaaaaa 1754')
-				_logging.info(e)
+				raise Warning('Ocurrio un inconveniente: %s' % str(e))
 				m_01 = []
+			
 			if m_01 :
 				lines_to_write_01.append('|'.join(m_01))
 
@@ -182,67 +210,23 @@ class PLEReport08(models.Model) :
 
 			m_03 = []
 			if m_01:
-				#1-4
-				#m_03.extend([
-				#    invoice_date.strftime('%Y%m00'),
-				#    str(move_id),
-				#    ('A'+str(move_id).rjust(9,'0')),
-				#    invoice_date.strftime('%d/%m/%Y'),
-				#])
 				m_03.extend(m_01[0:4])
-				#5
-				#if date_due :
-				#    m_03.append(date_due.strftime('%d/%m/%Y'))
-				#else :
-				#    m_03.append('')
 				m_03.append(m_01[4])
-				#6-9
-				#m_03.extend([
-				#    sunat_code,
-				#    sunat_number[0],
-				#    sunat_number[1],
-				#    '',
-				#])
 				m_03.extend([
 					m_01[5],
 					m_01[6],
 					m_01[8],
 				])
-				#10-12
-				#if sunat_partner_code and sunat_partner_vat and sunat_partner_name :
-				#    m_03.extend([
-				#        sunat_partner_code,
-				#        sunat_partner_vat,
-				#        sunat_partner_name,
-				#    ])
-				#else :
-				#    m_03.extend(['', '', ''])
 				m_03.extend(m_01[10:13])
-				#13-14
-				#m_03.extend([format(amount_untaxed, '.2f'), format(amount_tax, '.2f')])
 				m_03.extend(m_01[13:15])
-				#15
-				#m_03.append('0.00') #ICBP
 				m_03.append(m_01[21]) #ICBP
-				#16-19
-				#m_03.extend(['', format(amount_total, '.2f'), '', ''])
 				m_03.extend(m_01[22:26])
-				#20-23
-				#if sunat_code in ['07', '08'] :
-				#    origin = (sunat_code == '07') and move.credit_origin_id or move.debit_origin_id
-				#    origin_number = origin.ref.split('-')
-				#    m_03.extend([origin.invoice_date.strftime('%d/%m/%Y'), origin.pe_invoice_code])
-				#    m_03.extend([origin_number[0], origin_number[1]])
-				#else :
-				#    m_03.extend(['', '', '', '', ''])
 				m_03.extend([
 					m_01[26],
 					m_01[27],
 					m_01[28],
 					m_01[30],
 				])
-				#24-33
-				#m_03.extend(['', '', '', '', '', '', '', '', '1', ''])
 				m_03.extend(m_01[31:35]+m_01[36:39]+m_01[40:])
 			if m_03 :
 				lines_to_write_03.append('|'.join(m_03))

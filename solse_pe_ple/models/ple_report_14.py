@@ -122,11 +122,15 @@ class PLEReport14(models.Model) :
 				else :
 					m_1.extend(['', '', '', ''])
 				#14-18
-				m_1.extend([format(move.amount_untaxed, '.2f'), '', format(move.amount_tax, '.2f'), '', ''])
+				total_sin_impuestos = abs(move.amount_untaxed_signed)
+				total_impuestos = abs(move.amount_tax_signed)
+				m_1.extend([format(total_sin_impuestos, '.2f'), '', format(total_impuestos, '.2f'), '', ''])
 				#19-24
 				m_1.extend(['', '', '', '', '0.00', '']) #ICBP
 				#25-27
-				m_1.extend([format(move.amount_total, '.2f'), '', ''])
+				monto_total = abs(move.amount_total_signed)
+				#m_1.extend([format(move.amount_total, '.2f'), '', ''])
+				m_1.extend([format(monto_total, '.2f'), '', ''])
 				#28-31
 				# notas credito
 				if sunat_code in ['07'] :
