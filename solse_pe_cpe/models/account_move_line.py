@@ -144,10 +144,18 @@ class AccountInvoiceLine(models.Model):
 				res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['exonerado'])], limit=1)
 			self.tax_ids = [(6, 0, ids + res.ids)]
 			self._set_free_tax()
-		# (30) Inafecto - Operación Onerosa; ​ ​ (31) Inafecto - Retiro por bonificación; ​ ​ (32) Inafecto - Retiro; ​ ​ 
+		# (30) Inafecto - Operación Onerosa; ​ ​ 
+		elif self.pe_affectation_code in ('30'):
+			ids = self.tax_ids.filtered(lambda tax: tax.l10n_pe_edi_tax_code == constantes.IMPUESTO['inafecto']).ids
+			res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['inafecto']), ('id', 'in', ids)])
+			if not res:
+				res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['inafecto'])], limit=1)
+			self.tax_ids = [(6, 0, ids + res.ids)]
+			#self.discount = 100
+		# (31) Inafecto - Retiro por bonificación; ​ ​ (32) Inafecto - Retiro; ​ ​ 
 		# (33) Inafecto - Retiro por muestras médicas; ​ ​ (34) Inafecto - Retiro por convenio colectivo; ​ ​ (35) Inafecto - Retiro por premio; ​ ​ 
 		# (36) Inafecto - Retiro por publicidad
-		elif self.pe_affectation_code in ('30', '31', '32', '33', '34', '35', '36'):
+		elif self.pe_affectation_code in ('31', '32', '33', '34', '35', '36'):
 			ids = self.tax_ids.filtered(lambda tax: tax.l10n_pe_edi_tax_code == constantes.IMPUESTO['inafecto']).ids
 			res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['inafecto']), ('id', 'in', ids)])
 			if not res:

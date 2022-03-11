@@ -36,6 +36,12 @@ TYPE2JOURNAL = {'out_invoice':'sale',
  'in_invoice':'purchase',  'out_refund':'sale', 
  'in_refund':'purchase'}
 
+
+class AccountPayment(models.Model):
+	_inherit = 'account.payment'
+
+	transaction_number = fields.Char(string='Número de operación')
+
 class AccountMove(models.Model):
 	_inherit = 'account.move'
 	pe_additional_total_ids = fields.One2many('account.move.additional.total',
@@ -97,9 +103,15 @@ class AccountMove(models.Model):
 
 	pe_related_ids = fields.Many2many("account.move", string="Facturas relacionadas", compute="_get_related_ids")
 
-	@api.onchange('invoice_payment_term_id')
+	@api.onchange('invoice_payment_term_id', 'invoice_date_due', 'invoice_date')
 	def _onchange_termino_pago(self):
-		self.tipo_transaccion = self.invoice_payment_term_id.tipo_transaccion or 'contado'
+		reg = self
+		if reg.invoice_payment_term_id:
+			reg.tipo_transaccion = reg.invoice_payment_term_id.tipo_transaccion or 'contado'
+		elif reg.invoice_date_due and reg.invoice_date and reg.invoice_date_due > reg.invoice_date:
+			reg.tipo_transaccion = 'credito'
+		else:
+			reg.tipo_transaccion = 'contado'
 
 	@api.depends('invoice_line_ids')
 	def _get_related_ids(self):
@@ -250,15 +262,20 @@ class AccountMove(models.Model):
 			reg.pe_total_discount_tax = abs(total_discount_tax)
 			reg.pe_amount_discount = discount
 
-	@api.depends('pe_invoice_code')
+	@api.depends('pe_invoice_code', 'l10n_latam_document_type_id')
 	def _get_peruvian_doc_name(self):
 		for invoice_id in self:
 			if invoice_id.pe_invoice_code:
 				doc = self.env['pe.datas'].search([('table_code', '=', 'PE.CPE.CATALOG1'), ('code', '=', invoice_id.pe_invoice_code)])
-				pe_doc_name = doc.name and doc.name + ' Electronica' or ''
-				invoice_id.pe_doc_name = pe_doc_name.title()
+				if doc:
+					pe_doc_name = doc.name and doc.name + ' Electronica' or ''
+					invoice_id.pe_doc_name = pe_doc_name.title()
+				else:
+					invoice_id.pe_doc_name = invoice_id.l10n_latam_document_type_id.report_name
+			elif invoice_id.l10n_latam_document_type_id:
+				invoice_id.pe_doc_name = invoice_id.l10n_latam_document_type_id.report_name
 			else:
-				invoice_id.pe_doc_name = ""
+				invoice_id.pe_doc_name = "Comprobante"
 
 	def _get_pdf417_code(self):
 		for invoice_id in self:
@@ -323,6 +340,11 @@ class AccountMove(models.Model):
 					for line in self.invoice_line_ids:
 						if line.pe_affectation_code != '40':
 							raise UserError('El tipo de afectacion del producto %s debe ser Exportacion' % line.name)
+
+		if self.pe_invoice_code in ('01', ):
+			for line in self.invoice_line_ids:
+				if line.pe_affectation_code == '40' and line.move_id.pe_sunat_transaction51[:2] != '02':
+					raise UserError('Para la linea con el producto %s debe ser Exportacion' % line.name)
 
 		for line in self.invoice_line_ids:
 			if line.quantity == 0.0 or line.price_unit == 0.0:
@@ -400,6 +422,7 @@ class AccountMove(models.Model):
 	def _post(self, soft=True):
 		res = super()._post(soft=soft)
 		for invoice_id in res:
+			invoice_id._onchange_termino_pago()
 			invoice_id.action_date_assign()
 			if invoice_id.is_cpe and invoice_id.l10n_latam_document_type_id.code in ('01', '03', '07', '08'): 
 				to_write = {}				

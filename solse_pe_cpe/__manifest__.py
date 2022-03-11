@@ -35,6 +35,7 @@
 		'report/report_invoice.xml',
 		'report/report_invoice_ticket.xml',
 		'wizard/account_invoice_debit_view.xml',
+		'wizard/account_payment_register_views.xml',
 	],
 	'installable': True,
 	'price': 600,
