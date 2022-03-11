@@ -81,7 +81,7 @@ class AccountMove(models.Model):
 
 			if reg.tiene_detraccion:
 				reg.pe_sunat_transaction51 = '1001'
-			else:
+			elif reg.pe_sunat_transaction51[:2] != '02':
 				reg.pe_sunat_transaction51 = '0101'
 
 	@api.onchange('tiene_retencion')
@@ -110,7 +110,7 @@ class AccountMove(models.Model):
 
 			if reg.tiene_detraccion:
 				reg.pe_sunat_transaction51 = '1001'
-			else:
+			elif reg.pe_sunat_transaction51[:2] != '02':
 				reg.pe_sunat_transaction51 = '0101'
 	
 	def _get_l10n_latam_documents_domain(self):

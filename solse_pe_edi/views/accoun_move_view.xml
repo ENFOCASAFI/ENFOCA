@@ -22,7 +22,7 @@
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='other_info']" position="after">
-                <page string="Personalización Peruana" name="peruvian_customization">
+                <page string="Contabilidad Peruana" name="peruvian_customization_conta">
                     <group>
                         <group>
                             <field name="monto_base_detraccion" invisible="1" />
