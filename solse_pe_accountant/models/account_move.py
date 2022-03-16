@@ -15,9 +15,9 @@ class AccountMoveLine(models.Model):
 	transaction_number = fields.Char(related='payment_id.transaction_number', store=True)
 
 class StatementLine(models.Model):
-    _inherit = 'account.bank.statement.line'
+	_inherit = 'account.bank.statement.line'
 
-    transaction_number = fields.Char(string='Número de transacción')
+	transaction_number = fields.Char(string='Número de transacción')
 
 
 class AccountMove(models.Model):
@@ -26,6 +26,16 @@ class AccountMove(models.Model):
 	transaction_number = fields.Char(related='payment_id.transaction_number', store=True)
 	asiento_det_ret = fields.Many2one('account.move', string='Asiento retención/detracción')
 	pago_detraccion = fields.Many2one('account.payment', 'Pago de Detracción/Retención')
+
+	es_x_apertura = fields.Boolean("Movimiento por Apertura")
+	fecha_apertura = fields.Date("Fecha Apertura", default=fields.Date.context_today, readonly=True, states={'draft': [('readonly', False)]},)
+
+	@api.onchange('es_x_apertura', 'fecha_apertura')
+	def _onchange_fecha_apertura(self):
+		if self.es_x_apertura and self.fecha_apertura:
+			self.date = self.fecha_apertura
+		else:
+			self.date = self.invoice_date or fields.Date.context_today(self)
 
 	def _post(self, soft=True):
 		res = super(AccountMove, self)._post()

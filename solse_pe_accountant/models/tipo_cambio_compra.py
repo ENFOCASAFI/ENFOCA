@@ -24,8 +24,25 @@ class AccountMove(models.Model):
 		for reg in self:
 			if reg.move_type == 'in_invoice':
 				reg.fecha_tipo_cambio = reg.invoice_date or reg.date
+			elif reg.move_type == 'out_invoice' and reg.es_x_apertura:
+				reg.fecha_tipo_cambio = reg.fecha_apertura or reg.date
 			else:
 				reg.fecha_tipo_cambio = reg.date
+
+	@api.onchange('invoice_date', 'highest_name', 'company_id')
+	def _onchange_invoice_date(self):
+		if self.invoice_date:
+			if not self.invoice_payment_term_id and (not self.invoice_date_due or self.invoice_date_due < self.invoice_date):
+				self.invoice_date_due = self.invoice_date
+
+			has_tax = bool(self.line_ids.tax_ids or self.line_ids.tax_tag_ids)
+			accounting_date = self._get_accounting_date(self.invoice_date, has_tax)
+			if accounting_date != self.date:
+				fecha_apertura = self.fecha_apertura or accounting_date
+				self.date = fecha_apertura if self.es_x_apertura else accounting_date
+				self._onchange_currency()
+			else:
+				self._onchange_recompute_dynamic_lines()
 
 	def _recompute_tax_lines(self, recompute_tax_base_amount=False):
 		""" Compute the dynamic tax lines of the journal entry.
