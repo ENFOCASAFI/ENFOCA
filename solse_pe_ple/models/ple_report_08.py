@@ -150,7 +150,7 @@ class PLEReport08(models.Model) :
 				m_01.extend(['', '', '', '', '', '', '0.00', '']) #ICBP
 				#24
 				monto_total = abs(move.amount_total_signed)
-				m_01.extend(['', ''])
+				m_01.extend([format(monto_total, '.2f')])
 				#25-26 (Codigo de moneda y tipo de cambio - son opcionales)
 				m_01.extend([ '', ''])
 				#27-31
