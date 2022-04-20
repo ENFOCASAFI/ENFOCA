@@ -143,16 +143,41 @@ class PLEReport08(models.Model) :
 				else :
 					m_01.extend(['', '', ''])
 				#14-15
-				total_sin_impuestos = abs(move.amount_untaxed_signed)
+				#14 Base imponible de las adquisiciones gravadas que dan derecho a crédito fiscal y/o saldo a favor por exportación, 
+				#destinadas exclusivamente a operaciones gravadas y/o de exportación 
+				#15 Monto del Impuesto General a las Ventas y/o Impuesto de Promoción Municipal
+				#total_sin_impuestos = abs(move.amount_untaxed_signed)
+				total_sin_impuestos = move.obtener_total_base_afecto()
 				total_impuestos = abs(move.amount_tax_signed)
 				m_01.extend([format(total_sin_impuestos, '.2f'), format(total_impuestos, '.2f')])
 				#16-23
-				m_01.extend(['', '', '', '', '', '', '0.00', '']) #ICBP
+				#16 Base imponible de las adquisiciones gravadas que dan derecho a crédito fiscal y/o saldo a favor por exportación, 
+				#destinadas a operaciones gravadas y/o de exportación y a operaciones no gravadas
+				#-17 Monto del Impuesto General a las Ventas y/o Impuesto de Promoción Municipal
+				#18 Base imponible de las adquisiciones gravadas que no dan derecho a crédito fiscal y/o saldo a favor por exportación, 
+				#por no estar destinadas a operaciones gravadas y/o de exportación.
+				#-19 Monto del Impuesto General a las Ventas y/o Impuesto de Promoción Municipal
+				#20 Valor de las adquisiciones no gravadas
+				#21 Monto del Impuesto Selectivo al Consumo en los casos en que el sujeto pueda utilizarlo como deducción.
+				#22 Impuesto al Consumo de las Bolsas de Plástico.
+				#23 Otros conceptos, tributos y cargos que no formen parte de la base imponible.
+				adquision_no_grabada = move.obtener_total_base_inafecto()
+				m_01.extend(['', '', '', '', format(adquision_no_grabada, '.2f'), '', '0.00', '']) #ICBP
 				#24
 				monto_total = abs(move.amount_total_signed)
 				m_01.extend([format(monto_total, '.2f')])
 				#25-26 (Codigo de moneda y tipo de cambio - son opcionales)
-				m_01.extend([ '', ''])
+				fecha_busqueda = str(invoice_date)
+				currency_rate_id = [
+					('name', '=', fecha_busqueda),
+					('company_id','=', move.company_id.id),
+					('currency_id','=', move.currency_id.id),
+				]
+				currency_rate_id = self.env['res.currency.rate'].sudo().search(currency_rate_id)
+				tipo_cambio = 1.000
+				if currency_rate_id:
+					tipo_cambio = currency_rate_id.rate_pe
+				m_01.extend([move.currency_id.name, format(tipo_cambio, '.3f')])
 				#27-31
 				# notas credito
 				if sunat_code in ['07'] :
