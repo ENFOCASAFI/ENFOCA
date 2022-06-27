@@ -19,7 +19,7 @@ class AccountMulticurrencyRevaluation(models.AbstractModel):
                 'display_name': f"{currency_id.name}/Compra" if currency_id.rate_type == 'purchase' else f"{currency_id.name}/Venta",
                 'currency_name': currency_id.name,
                 'currency_main': self.env.company.currency_id.name,
-                'rate': rates[currency_id.id],
+                'rate': round(1 / rates[currency_id.id], 3),
             } for currency_id in self.env['res.currency'].search([('active', '=', True)])
         }
         options['company_currency'] = options['currency_rates'].pop(str(self.env.company.currency_id.id))
