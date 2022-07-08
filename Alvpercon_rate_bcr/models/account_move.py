@@ -14,7 +14,7 @@ class AccountMoveLine(models.Model):
 	date_related = fields.Date("Fecha relacionada", related="move_id.invoice_date")
 	invoice_date = fields.Date("Fecha Factura", compute="_compute_invoice_date" , digits=(12,3))
 	amount_currency_d = fields.Float('Importe en Dólares', compute="_compute_importe_d" , digits=(12,3) )
-	date_acc_entry = fields.Date("Fecha Asiento", related="origin_move_line_id.invoice_date")
+	date_acc_entry = fields.Date("Fecha Asiento", related="origin_move_line_id.invoice_date") # campo instalado desde solse_target_move
 	es_x_apertrel = fields.Boolean("Movimiento por Apertura", related="move_id.es_x_apertura")
  
  
@@ -47,10 +47,13 @@ class AccountMoveLine(models.Model):
 			currency_rate_id = self.env['res.currency.rate'].sudo().search(currency_rate_id)
 			#for regs in currency_rate_id:
 			if currency_rate_id:
-				if reg.es_x_apertrel == False:
-					reg.tipo_cambio = currency_rate_id.rate_pe
+				if reg.journal_id.id == 4:
+					reg.tipo_cambio = 0
 				else:
-					reg.tipo_cambio = (reg.debit + reg.credit)/abs(reg.amount_currency)
+					if reg.es_x_apertrel == False:
+						reg.tipo_cambio = currency_rate_id.rate_pe
+					else:
+						reg.tipo_cambio = (reg.debit + reg.credit)/abs(reg.amount_currency)
 			else:
 				reg.tipo_cambio = 1
     

@@ -4,7 +4,7 @@
 	'name': 'Tipo de cambio del BCR en detalles de facturas',
 	'version': '14.0.1.0.0',
 	'category': 'Extra Tools',
-	'summary': 'Automatización de tipo de cambio del BCR en lineas contables de facturas compras y ventas tomando como referencia fecha de factura Ver 1.3 13-06-2022 13:52 ',
+	'summary': 'Automatización de tipo de cambio del BCR en lineas contables de facturas compras y ventas tomando como referencia fecha de factura Ver 1.4 04-07-2022 23:23 se agrega condicion en tipo de cambio = 0 para diario diferencia de cambio ',
 	'author': 'Alvpercon',
 	'website': 'https://www.alvpercon.com',
 	'depends': [
