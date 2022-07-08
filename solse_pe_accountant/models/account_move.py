@@ -33,7 +33,7 @@ class AccountMove(models.Model):
 	@api.onchange('es_x_apertura', 'fecha_apertura')
 	def _onchange_fecha_apertura(self):
 		if self.es_x_apertura and self.fecha_apertura:
-			self.date = self.fecha_apertura
+			self.date = self.fecha_apertura or fields.Date.context_today(self)
 		else:
 			self.date = self.invoice_date or fields.Date.context_today(self)
 

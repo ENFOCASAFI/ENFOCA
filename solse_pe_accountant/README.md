@@ -11,3 +11,6 @@
 *_onchange_amount_currency
 *_onchange_currency
 *_prepare_reconciliation_partials
+
+
+# Revisar caso de factura con monto 48.28

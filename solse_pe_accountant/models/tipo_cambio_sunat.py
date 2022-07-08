@@ -7,7 +7,7 @@ _logging = logging.getLogger(__name__)
 
 INCLUIDOS = ['in_invoice', 'out_invoice', 'in_refund', 'out_refund']
 
-class AccountMove(models.Model):
+class AccountMoveSunat(models.Model):
 	_inherit = 'account.move'
 
 	@api.model
@@ -20,16 +20,6 @@ class AccountMove(models.Model):
 
 	invoice_date = fields.Date(string='Invoice/Bill Date', default=_get_default_fecha_factura, readonly=True, index=True, copy=False, states={'draft': [('readonly', False)]})
 	fecha_tipo_cambio = fields.Date("Fecha tipo de cambio", compute="_compute_fecha_tipo_cambio", help="Fecha que se toma para el tipo de cambio.\nPara compras toma la fecha de factura y para los demás movimientos la fecha contable")
-
-	"""@api.depends('move_type', 'date', 'invoice_date')
-	def _compute_fecha_tipo_cambio(self):
-		for reg in self:
-			if reg.move_type == 'in_invoice':
-				reg.fecha_tipo_cambio = reg.invoice_date or reg.date
-			elif reg.move_type == 'out_invoice' and reg.es_x_apertura:
-				reg.fecha_tipo_cambio = reg.invoice_date or reg.date
-			else:
-				reg.fecha_tipo_cambio = reg.date"""
 
 	@api.depends('move_type', 'date', 'invoice_date')
 	def _compute_fecha_tipo_cambio(self):
@@ -50,11 +40,13 @@ class AccountMove(models.Model):
 				fecha = reg.date
 
 			reg.fecha_tipo_cambio = fecha
-			reg._onchange_currency()
-			reg._onchange_recompute_dynamic_lines()
+			#reg.fecha_tipo_cambio = reg.date
+			#reg._onchange_currency()
+			#reg._onchange_recompute_dynamic_lines()
 
 	@api.onchange('invoice_date', 'highest_name', 'company_id')
 	def _onchange_invoice_date(self):
+		_logging.info("======================= _onchange_invoice_date")
 		self._compute_fecha_tipo_cambio()
 		if self.invoice_date:
 			if not self.invoice_payment_term_id and (not self.invoice_date_due or self.invoice_date_due < self.invoice_date):
@@ -70,6 +62,7 @@ class AccountMove(models.Model):
 				self._onchange_recompute_dynamic_lines()
 
 	def _recompute_tax_lines(self, recompute_tax_base_amount=False):
+		_logging.info("======================= _recompute_tax_lines")
 		""" Compute the dynamic tax lines of the journal entry.
 
 		:param recompute_tax_base_amount: Flag forcing only the recomputation of the `tax_base_amount` field.
@@ -206,7 +199,7 @@ class AccountMove(models.Model):
 
 			# tax_base_amount field is expressed using the company currency.
 			fecha_tipo_cambio = self.date if self.move_type not in INCLUIDOS else self.fecha_tipo_cambio
-			tax_base_amount = currency._convert(taxes_map_entry['tax_base_amount'], self.company_currency_id, self.company_id, fecha_tipo_cambio or fields.Date.context_today(self))
+			tax_base_amount = currency._convert(taxes_map_entry['tax_base_amount'], self.company_currency_id, self.company_id, fecha_tipo_cambio)
 
 			# Recompute only the tax_base_amount.
 			if recompute_tax_base_amount:
@@ -218,7 +211,7 @@ class AccountMove(models.Model):
 				taxes_map_entry['amount'],
 				self.company_currency_id,
 				self.company_id,
-				fecha_tipo_cambio or fields.Date.context_today(self),
+				fecha_tipo_cambio,
 			)
 			to_write_on_line = {
 				'amount_currency': taxes_map_entry['amount'],
@@ -254,6 +247,7 @@ class AccountMove(models.Model):
 
 
 	def _recompute_cash_rounding_lines(self):
+		_logging.info("======================= _recompute_cash_rounding_lines")
 		''' Handle the cash rounding feature on invoices.
 
 		In some countries, the smallest coins do not exist. For example, in Switzerland, there is no coin for 0.01 CHF.
@@ -379,6 +373,7 @@ class AccountMove(models.Model):
 		_apply_cash_rounding(self, diff_balance, diff_amount_currency, existing_cash_rounding_line)
 
 	def _inverse_amount_total(self):
+		_logging.info("======================= _inverse_amount_total")
 		for move in self:
 			if len(move.line_ids) != 2 or move.is_invoice(include_receipts=True):
 				continue
@@ -400,6 +395,7 @@ class AccountMove(models.Model):
 			move.write({'line_ids': to_write})
 
 	def _compute_payments_widget_to_reconcile_info(self):
+		_logging.info("======================= _compute_payments_widget_to_reconcile_info")
 		for move in self:
 			move.invoice_outstanding_credits_debits_widget = json.dumps(False)
 			move.invoice_has_outstanding = False
@@ -465,26 +461,28 @@ class AccountMove(models.Model):
 			move.invoice_has_outstanding = True
 
 
-class AccountMoveLine(models.Model):
+class AccountMoveLineSunat(models.Model):
 	_inherit = 'account.move.line'
 
 	parent_move_type = fields.Selection(related='move_id.move_type', store=True, readonly=True)
 
 	@api.onchange('currency_id')
 	def _onchange_currency(self):
+		_logging.info("======================= _onchange_currency")
 		for line in self:
 			company = line.move_id.company_id
 			if line.move_id.is_invoice(include_receipts=True):
 				line._onchange_price_subtotal()
 			elif not line.move_id.reversed_entry_id:
 				fecha_tipo_cambio = line.move_id.date if line.move_id.move_type not in INCLUIDOS else line.move_id.fecha_tipo_cambio
-				balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, fecha_tipo_cambio or fields.Date.context_today(line))
+				balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, fecha_tipo_cambio)
 				line.debit = balance if balance > 0.0 else 0.0
 				line.credit = -balance if balance < 0.0 else 0.0
 
 
 	@api.model
 	def _get_fields_onchange_subtotal_model(self, price_subtotal, move_type, currency, company, date):
+		_logging.info("======================= _get_fields_onchange_subtotal_model")
 		''' This method is used to recompute the values of 'amount_currency', 'debit', 'credit' due to a change made
 		in some business fields (affecting the 'price_subtotal' field).
 
@@ -504,7 +502,7 @@ class AccountMoveLine(models.Model):
 
 		amount_currency = price_subtotal * sign
 		fecha_tipo_cambio = date if self.move_id.move_type not in INCLUIDOS else self.move_id.fecha_tipo_cambio
-		balance = currency._convert(amount_currency, company.currency_id, company, fecha_tipo_cambio or fields.Date.context_today(self))
+		balance = currency._convert(amount_currency, company.currency_id, company, fecha_tipo_cambio)
 		return {
 			'amount_currency': amount_currency,
 			'currency_id': currency.id,
@@ -514,10 +512,11 @@ class AccountMoveLine(models.Model):
 
 	@api.onchange('amount_currency')
 	def _onchange_amount_currency(self):
+		_logging.info("======================= _onchange_amount_currency")
 		for line in self:
 			company = line.move_id.company_id
 			fecha_tipo_cambio = line.move_id.date if line.move_id.move_type not in INCLUIDOS else line.move_id.fecha_tipo_cambio
-			balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, fecha_tipo_cambio or fields.Date.context_today(line))
+			balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, fecha_tipo_cambio)
 			line.debit = balance if balance > 0.0 else 0.0
 			line.credit = -balance if balance < 0.0 else 0.0
 
@@ -528,6 +527,7 @@ class AccountMoveLine(models.Model):
 			line.update(line._get_price_total_and_subtotal())
 
 	def _prepare_reconciliation_partials(self):
+		_logging.info("======================= _prepare_reconciliation_partials")
 		''' Prepare the partials on the current journal items to perform the reconciliation.
 		/!\ The order of records in self is important because the journal items will be reconciled using this order.
 

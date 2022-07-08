@@ -5,6 +5,7 @@ from odoo.exceptions import UserError, ValidationError
 from dateutil.relativedelta import relativedelta
 from collections import defaultdict
 
+# Se modifica para poder realizar la conciliacion bancaria usando el numero de operación
 class accountReconcileModel(models.Model):
 	_inherit = 'account.reconcile.model'
 

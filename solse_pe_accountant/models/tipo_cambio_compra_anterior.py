@@ -33,6 +33,7 @@ class AccountMove(models.Model):
 
 	@api.depends('move_type', 'date', 'invoice_date')
 	def _compute_fecha_tipo_cambio(self):
+		_logging.info("_compute_fecha_tipo_cambiooooooooooooooooooooooo")
 		for reg in self:
 			fecha = reg.invoice_date
 			if reg.state in ['posted', 'cancel', 'annull']:
@@ -43,18 +44,52 @@ class AccountMove(models.Model):
 			elif reg.move_type == 'in_refund': # Notas de credito proveedor
 				fecha = reg.reversed_entry_id.invoice_date
 			elif reg.move_type == 'out_refund': # Notas de credito cliente
+				_logging.info("nota de credito del clienteeeeeeeeeeeeeeeeeee")
+				_logging.info(reg.reversed_entry_id)
+				_logging.info(reg.reversed_entry_id.name)
 				fecha = reg.reversed_entry_id.invoice_date
 			elif reg.move_type == 'out_invoice' and reg.es_x_apertura: # Facturas de cliente
 				fecha = reg.invoice_date
 			else:
 				fecha = reg.date
 
+			_logging.info("fecha finalllllllllllllllllll")
+			_logging.info(fecha)
 			reg.fecha_tipo_cambio = fecha
 			reg._onchange_currency()
 			reg._onchange_recompute_dynamic_lines()
 
+	def recalcular_tipo_cambio(self):
+		_logging.info("recalcular_tipo_cambiooooooooooooooooooooooooooooooooooo")
+		reg = self
+		fecha = reg.invoice_date
+		if reg.state in ['posted', 'cancel', 'annull']:
+			reg.fecha_tipo_cambio = reg.date
+			_logging.info("retornooooo")
+			return
+		if reg.move_type == 'in_invoice': # Facturas proveedor
+			fecha = reg.invoice_date
+		elif reg.move_type == 'in_refund': # Notas de credito proveedor
+			fecha = reg.reversed_entry_id.invoice_date
+		elif reg.move_type == 'out_refund': # Notas de credito cliente
+			_logging.info("nota de credito del clienteeeeeeeeeeeeeeeeeee")
+			_logging.info(reg.reversed_entry_id)
+			_logging.info(reg.reversed_entry_id.name)
+			fecha = reg.reversed_entry_id.invoice_date
+		elif reg.move_type == 'out_invoice' and reg.es_x_apertura: # Facturas de cliente
+			fecha = reg.invoice_date
+		else:
+			fecha = reg.date
+
+		_logging.info("fecha finalllllllllllllllllll")
+		_logging.info(fecha)
+		reg.fecha_tipo_cambio = fecha
+		reg._onchange_currency()
+		reg._onchange_recompute_dynamic_lines()
+
 	@api.onchange('invoice_date', 'highest_name', 'company_id')
 	def _onchange_invoice_date(self):
+		_logging.info("se ejecutaaa ****************")
 		self._compute_fecha_tipo_cambio()
 		if self.invoice_date:
 			if not self.invoice_payment_term_id and (not self.invoice_date_due or self.invoice_date_due < self.invoice_date):
@@ -205,8 +240,7 @@ class AccountMove(models.Model):
 				continue
 
 			# tax_base_amount field is expressed using the company currency.
-			fecha_tipo_cambio = self.date if self.move_type not in INCLUIDOS else self.fecha_tipo_cambio
-			tax_base_amount = currency._convert(taxes_map_entry['tax_base_amount'], self.company_currency_id, self.company_id, fecha_tipo_cambio or fields.Date.context_today(self))
+			tax_base_amount = currency._convert(taxes_map_entry['tax_base_amount'], self.company_currency_id, self.company_id, self.fecha_tipo_cambio or fields.Date.context_today(self))
 
 			# Recompute only the tax_base_amount.
 			if recompute_tax_base_amount:
@@ -218,7 +252,7 @@ class AccountMove(models.Model):
 				taxes_map_entry['amount'],
 				self.company_currency_id,
 				self.company_id,
-				fecha_tipo_cambio or fields.Date.context_today(self),
+				self.fecha_tipo_cambio or fields.Date.context_today(self),
 			)
 			to_write_on_line = {
 				'amount_currency': taxes_map_entry['amount'],
@@ -241,6 +275,7 @@ class AccountMove(models.Model):
 					**to_write_on_line,
 					'name': tax.name,
 					'move_id': self.id,
+					'partner_id': line.partner_id.id,
 					'company_id': line.company_id.id,
 					'company_currency_id': line.company_currency_id.id,
 					'tax_base_amount': tax_base_amount,
@@ -251,7 +286,6 @@ class AccountMove(models.Model):
 
 			if in_draft_mode:
 				taxes_map_entry['tax_line'].update(taxes_map_entry['tax_line']._get_fields_onchange_balance(force_computation=True))
-
 
 	def _recompute_cash_rounding_lines(self):
 		''' Handle the cash rounding feature on invoices.
@@ -280,8 +314,7 @@ class AccountMove(models.Model):
 				diff_amount_currency = diff_balance = difference
 			else:
 				diff_amount_currency = difference
-				fecha_tipo_cambio = self.date if self.move_type not in INCLUIDOS else self.fecha_tipo_cambio
-				diff_balance = self.currency_id._convert(diff_amount_currency, self.company_id.currency_id, self.company_id, fecha_tipo_cambio)
+				diff_balance = self.currency_id._convert(diff_amount_currency, self.company_id.currency_id, self.company_id, self.fecha_tipo_cambio)
 			return diff_balance, diff_amount_currency
 
 		def _apply_cash_rounding(self, diff_balance, diff_amount_currency, cash_rounding_line):
@@ -320,7 +353,6 @@ class AccountMove(models.Model):
 					'name': _('%s (rounding)', biggest_tax_line.name),
 					'account_id': biggest_tax_line.account_id.id,
 					'tax_repartition_line_id': biggest_tax_line.tax_repartition_line_id.id,
-					'tax_tag_ids': [(6, 0, biggest_tax_line.tax_tag_ids.ids)],
 					'tax_exigible': biggest_tax_line.tax_exigible,
 					'exclude_from_invoice_tab': True,
 				})
@@ -386,8 +418,7 @@ class AccountMove(models.Model):
 			to_write = []
 
 			amount_currency = abs(move.amount_total)
-			fecha_tipo_cambio = move.date if move.move_type not in INCLUIDOS else move.fecha_tipo_cambio
-			balance = move.currency_id._convert(amount_currency, move.company_currency_id, move.company_id, fecha_tipo_cambio)
+			balance = move.currency_id._convert(amount_currency, move.company_currency_id, move.company_id, move.fecha_tipo_cambio)
 
 			for line in move.line_ids:
 				if not line.currency_id.is_zero(balance - abs(line.balance)):
@@ -414,7 +445,7 @@ class AccountMove(models.Model):
 
 			domain = [
 				('account_id', 'in', pay_term_lines.account_id.ids),
-				('parent_state', '=', 'posted'),
+				('move_id.state', '=', 'posted'),
 				('partner_id', '=', move.commercial_partner_id.id),
 				('reconciled', '=', False),
 				'|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0),
@@ -436,12 +467,11 @@ class AccountMove(models.Model):
 					amount = abs(line.amount_residual_currency)
 				else:
 					# Different foreign currencies.
-					fecha_tipo_cambio = line.date if move.move_type not in INCLUIDOS else move.fecha_tipo_cambio
 					amount = move.company_currency_id._convert(
 						abs(line.amount_residual),
 						move.currency_id,
 						move.company_id,
-						fecha_tipo_cambio,
+						(move.fecha_tipo_cambio if move.move_type == 'in_invoice' else line.date),
 					)
 
 				if move.currency_id.is_zero(amount):
@@ -470,18 +500,76 @@ class AccountMoveLine(models.Model):
 
 	parent_move_type = fields.Selection(related='move_id.move_type', store=True, readonly=True)
 
-	@api.onchange('currency_id')
-	def _onchange_currency(self):
-		for line in self:
-			company = line.move_id.company_id
-			if line.move_id.is_invoice(include_receipts=True):
-				line._onchange_price_subtotal()
-			elif not line.move_id.reversed_entry_id:
-				fecha_tipo_cambio = line.move_id.date if line.move_id.move_type not in INCLUIDOS else line.move_id.fecha_tipo_cambio
-				balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, fecha_tipo_cambio or fields.Date.context_today(line))
-				line.debit = balance if balance > 0.0 else 0.0
-				line.credit = -balance if balance < 0.0 else 0.0
+	def _get_computed_price_unit(self):
+		''' Helper to get the default price unit based on the product by taking care of the taxes
+		set on the product and the fiscal position.
+		:return: The price unit.
+		'''
+		self.ensure_one()
 
+		if not self.product_id:
+			return 0.0
+
+		company = self.move_id.company_id
+		currency = self.move_id.currency_id
+		company_currency = company.currency_id
+		product_uom = self.product_id.uom_id
+		fiscal_position = self.move_id.fiscal_position_id
+		is_refund_document = self.move_id.move_type in ('out_refund', 'in_refund')
+		move_date = self.move_id.fecha_tipo_cambio or fields.Date.context_today(self)
+
+		if self.move_id.is_sale_document(include_receipts=True):
+			product_price_unit = self.product_id.lst_price
+			product_taxes = self.product_id.taxes_id
+		elif self.move_id.is_purchase_document(include_receipts=True):
+			product_price_unit = self.product_id.standard_price
+			product_taxes = self.product_id.supplier_taxes_id
+		else:
+			return 0.0
+		product_taxes = product_taxes.filtered(lambda tax: tax.company_id == company)
+
+		# Apply unit of measure.
+		if self.product_uom_id and self.product_uom_id != product_uom:
+			product_price_unit = product_uom._compute_price(product_price_unit, self.product_uom_id)
+
+		# Apply fiscal position.
+		if product_taxes and fiscal_position:
+			product_taxes_after_fp = fiscal_position.map_tax(product_taxes, partner=self.partner_id)
+
+			if set(product_taxes.ids) != set(product_taxes_after_fp.ids):
+				flattened_taxes_before_fp = product_taxes._origin.flatten_taxes_hierarchy()
+				if any(tax.price_include for tax in flattened_taxes_before_fp):
+					taxes_res = flattened_taxes_before_fp.compute_all(
+						product_price_unit,
+						quantity=1.0,
+						currency=company_currency,
+						product=self.product_id,
+						partner=self.partner_id,
+						is_refund=is_refund_document,
+					)
+					product_price_unit = company_currency.round(taxes_res['total_excluded'])
+
+				flattened_taxes_after_fp = product_taxes_after_fp._origin.flatten_taxes_hierarchy()
+				if any(tax.price_include for tax in flattened_taxes_after_fp):
+					taxes_res = flattened_taxes_after_fp.compute_all(
+						product_price_unit,
+						quantity=1.0,
+						currency=company_currency,
+						product=self.product_id,
+						partner=self.partner_id,
+						is_refund=is_refund_document,
+						handle_price_include=False,
+					)
+					for tax_res in taxes_res['taxes']:
+						tax = self.env['account.tax'].browse(tax_res['id'])
+						if tax.price_include:
+							product_price_unit += tax_res['amount']
+
+		# Apply currency rate.
+		if currency and currency != company_currency:
+			product_price_unit = company_currency._convert(product_price_unit, currency, company, move_date)
+
+		return product_price_unit
 
 	@api.model
 	def _get_fields_onchange_subtotal_model(self, price_subtotal, move_type, currency, company, date):
@@ -503,7 +591,7 @@ class AccountMoveLine(models.Model):
 			sign = 1
 
 		amount_currency = price_subtotal * sign
-		fecha_tipo_cambio = date if self.move_id.move_type not in INCLUIDOS else self.move_id.fecha_tipo_cambio
+		fecha_tipo_cambio = date if move_type != 'in_invoice' else self.move_id.fecha_tipo_cambio
 		balance = currency._convert(amount_currency, company.currency_id, company, fecha_tipo_cambio or fields.Date.context_today(self))
 		return {
 			'amount_currency': amount_currency,
@@ -516,8 +604,7 @@ class AccountMoveLine(models.Model):
 	def _onchange_amount_currency(self):
 		for line in self:
 			company = line.move_id.company_id
-			fecha_tipo_cambio = line.move_id.date if line.move_id.move_type not in INCLUIDOS else line.move_id.fecha_tipo_cambio
-			balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, fecha_tipo_cambio or fields.Date.context_today(line))
+			balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, line.move_id.fecha_tipo_cambio or fields.Date.context_today(line))
 			line.debit = balance if balance > 0.0 else 0.0
 			line.credit = -balance if balance < 0.0 else 0.0
 
@@ -527,18 +614,24 @@ class AccountMoveLine(models.Model):
 			line.update(line._get_fields_onchange_balance())
 			line.update(line._get_price_total_and_subtotal())
 
+	@api.onchange('currency_id')
+	def _onchange_currency(self):
+		for line in self:
+			company = line.move_id.company_id
+
+			if line.move_id.is_invoice(include_receipts=True):
+				line._onchange_price_subtotal()
+			elif not line.move_id.reversed_entry_id:
+				balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, line.move_id.fecha_tipo_cambio or fields.Date.context_today(line))
+				line.debit = balance if balance > 0.0 else 0.0
+				line.credit = -balance if balance < 0.0 else 0.0
+
 	def _prepare_reconciliation_partials(self):
 		''' Prepare the partials on the current journal items to perform the reconciliation.
 		/!\ The order of records in self is important because the journal items will be reconciled using this order.
 
 		:return: A recordset of account.partial.reconcile.
 		'''
-		def fix_remaining_cent(currency, abs_residual, partial_amount):
-			if abs_residual - currency.rounding <= partial_amount <= abs_residual + currency.rounding:
-				return abs_residual
-			else:
-				return partial_amount
-
 		debit_lines = iter(self.filtered(lambda line: line.balance > 0.0 or line.amount_currency > 0.0))
 		credit_lines = iter(self.filtered(lambda line: line.balance < 0.0 or line.amount_currency < 0.0))
 		debit_line = None
@@ -623,30 +716,17 @@ class AccountMoveLine(models.Model):
 					credit_line = None
 					continue
 
-				fecha_tipo_cambio_credit = credit_line.date if credit_line.move_id.move_type not in INCLUIDOS else credit_line.move_id.fecha_tipo_cambio
 				min_debit_amount_residual_currency = credit_line.company_currency_id._convert(
 					min_amount_residual,
 					debit_line.currency_id,
 					credit_line.company_id,
-					fecha_tipo_cambio_credit,
+					(credit_line.date if credit_line.parent_move_type !='in_invoice' else credit_line.move_id.fecha_tipo_cambio),
 				)
-				min_debit_amount_residual_currency = fix_remaining_cent(
-					debit_line.currency_id,
-					debit_amount_residual_currency,
-					min_debit_amount_residual_currency,
-				)
-
-				fecha_tipo_cambio_debit = debit_line.date if debit_line.move_id.move_type not in INCLUIDOS else debit_line.move_id.fecha_tipo_cambio
 				min_credit_amount_residual_currency = debit_line.company_currency_id._convert(
 					min_amount_residual,
 					credit_line.currency_id,
 					debit_line.company_id,
-					fecha_tipo_cambio_debit,
-				)
-				min_credit_amount_residual_currency = fix_remaining_cent(
-					credit_line.currency_id,
-					-credit_amount_residual_currency,
-					min_credit_amount_residual_currency,
+					(debit_line.date if debit_line.parent_move_type !='in_invoice' else debit_line.move_id.fecha_tipo_cambio),
 				)
 
 			debit_amount_residual -= min_amount_residual
