@@ -11,11 +11,11 @@ class AccountMove(models.Model):
     @api.depends('move_type')
     def _compute_currency_available_ids(self):
         for record in self:
+            currencies = self.env['res.currency']
             if record.move_type in ['out_invoice', 'out_refund', 'out_receipt']:
-                currencies = self.env['res.currency']
                 currency_available_ids = currencies.search([('rate_type', '=', 'buy')])
             elif record.move_type in ['in_invoice', 'in_refund', 'in_receipt']:
-                currency_available_ids = self.env['res.currency'].search([('rate_type', '=', 'sell')])
+                currency_available_ids = currencies.search([('rate_type', '=', 'sell')])
             else:
                 currency_available_ids = currencies
             record.currency_available_ids = currency_available_ids
