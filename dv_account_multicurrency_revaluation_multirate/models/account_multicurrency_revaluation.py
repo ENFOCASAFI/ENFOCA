@@ -45,8 +45,8 @@ class AccountMulticurrencyRevaluation(models.AbstractModel):
             SELECT {move_line_fields},
                    aml.amount_currency                                  AS report_amount_currency,
                    aml.balance                                          AS report_balance,
-                   aml.amount_currency / custom_currency_table.rate               AS report_amount_currency_current,
-                   aml.amount_currency / custom_currency_table.rate - aml.balance AS report_adjustment,
+                   aml.amount_currency * custom_currency_table.rate               AS report_amount_currency_current,
+                   aml.amount_currency * custom_currency_table.rate - aml.balance AS report_adjustment,
                    aml.currency_id                                      AS report_currency_id,
                    account.code                                         AS account_code,
                    account.name                                         AS account_name,
@@ -70,9 +70,9 @@ class AccountMulticurrencyRevaluation(models.AbstractModel):
                    END                                                  AS report_amount_currency,
                    -part.amount                                         AS report_balance,
                    CASE WHEN aml.id = part.credit_move_id THEN -part.debit_amount_currency ELSE -part.credit_amount_currency
-                   END / custom_currency_table.rate                               AS report_amount_currency_current,
+                   END * custom_currency_table.rate                               AS report_amount_currency_current,
                    CASE WHEN aml.id = part.credit_move_id THEN -part.debit_amount_currency ELSE -part.credit_amount_currency
-                   END / custom_currency_table.rate - aml.balance                 AS report_adjustment,
+                   END * custom_currency_table.rate - aml.balance                 AS report_adjustment,
                    CASE WHEN aml.id = part.credit_move_id THEN part.debit_currency_id ELSE part.credit_currency_id
                    END                                                  AS report_currency_id,
                    account.code                                         AS account_code,
