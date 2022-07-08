@@ -17,6 +17,9 @@ from json import dumps
 import json
 import re
 
+import logging
+_logging = logging.getLogger(__name__)
+
 class AccountMove(models.Model):
 	_inherit = "account.move"
 	
@@ -41,64 +44,92 @@ class AccountMove(models.Model):
 			# account_id = l.account_id.id
 			if not l.target_move_id:
 				move_data = {
-							'origin_move_id': move.id,
-							'origin_move_line_id': l.id,
-							'ref': l.name,
-							'date': l.date,
-							'journal_id': l.account_id.target_journal_id and l.account_id.target_journal_id.id or False,
-							'move_type': 'entry',
-							}
+					'origin_move_id': move.id,
+					'origin_move_line_id': l.id,
+					'ref': l.name,
+					'date': l.date,
+					'journal_id': l.account_id.target_journal_id and l.account_id.target_journal_id.id or False,
+					'move_type': 'entry',
+				}
 				target_move_id = self.env['account.move'].create(move_data)
 				l.target_move_id = target_move_id
 
 			line_data = {
-						'origin_move_id': move.id,
-						'origin_move_line_id': l.id,
-						'name': l.name,
-						'ref': move.name,
-						'partner_id': l.partner_id and l.partner_id.id or False,                                    
-						'currency_id': l.currency_id and l.currency_id.id or False,
-					}
-			debit_data = dict(line_data)
-			credit_data = dict(line_data)
+				'origin_move_id': move.id,
+				'origin_move_line_id': l.id,
+				'name': l.name,
+				'ref': move.name,
+				'partner_id': l.partner_id and l.partner_id.id or False,                                    
+				'currency_id': l.currency_id and l.currency_id.id or False,
+			}
+			
+			array_debit_data = []
+			array_credit_data = []
+
+			targets = l.account_id.target_line_ids
 
 			if l.debit != False:
-				debit_data.update(
-						account_id = l.account_id.debit_target_account_id.id,
-						debit = l.debit,
-						credit = False,
-						amount_currency = l.amount_currency,
-					)
-				credit_data.update(
-						account_id = l.account_id.credit_target_account_id.id,
-						debit = False,
-						credit = l.debit,
-						amount_currency = l.amount_currency * -1.0,
-				)
+				for target in targets:
+					debit_data = dict(line_data)
+					credit_data = dict(line_data)
+					l_monto = (l.debit / (100.000 / target.percent))
+					l_amount_currency = (l.amount_currency / (100.000 / target.percent))
+					# Debe
+					if target.type == 'd':
+						debit_data.update(
+							account_id = target.target_account_id.id,
+							debit = l_monto,
+							credit = False,
+							amount_currency = l_amount_currency,
+						)
+						array_debit_data.append((0,0, debit_data))
+					# Haber
+					else:
+						credit_data.update(
+							account_id = target.target_account_id.id,
+							debit = False,
+							credit = l_monto,
+							amount_currency = l_amount_currency * -1.0,
+						)
+						array_credit_data.append((0,0, credit_data))
 			else:
-				debit_data.update(                                   
-						account_id = l.account_id.debit_target_account_id.id,
-						debit = False,
-						credit = l.credit,
-						amount_currency = l.amount_currency,
-				)
-				credit_data.update(
-						account_id = l.account_id.credit_target_account_id.id,
-						debit = l.credit,
-						credit = False,
-						amount_currency = l.amount_currency * -1.0,
-				)
+				for target in targets:
+					debit_data = dict(line_data)
+					credit_data = dict(line_data)
+					l_monto = (l.credit / (100.000 / target.percent))
+					l_amount_currency = (l.amount_currency / (100.000 / target.percent))
+					# Debe
+					if target.type == 'd':
+						debit_data.update(                                   
+							account_id = target.target_account_id.id,
+							debit = False,
+							credit = l_monto,
+							amount_currency = l_amount_currency,
+						)
+						array_debit_data.append((0,0, debit_data))
+					# Haber
+					else:
+						credit_data.update(
+							account_id = target.target_account_id.id,
+							debit = l_monto,
+							credit = False,
+							amount_currency = l_amount_currency * -1.0,
+						)
+						array_credit_data.append((0,0, credit_data))
 			
 			if not l.target_move_id.line_ids:
+				lineas_destino = array_debit_data + array_credit_data
+				_logging.info("total de lineas")
+				_logging.info(lineas_destino)
 				l.target_move_id.write({
-					'line_ids': [(0, 0, debit_data), (0, 0, credit_data)]
+					'line_ids': lineas_destino
 				})
-			else:
+			"""else:
 				for line in l.target_move_id.line_ids:
 					if line.account_id.id == l.account_id.debit_target_account_id.id:
 						line.write(debit_data)
 					if line.account_id.id == l.account_id.credit_target_account_id.id:
-						line.write(credit_data)
+						line.write(credit_data)"""
 			# Post Target move
 			if l.target_move_id.state == 'draft':
 				l.target_move_id._post()

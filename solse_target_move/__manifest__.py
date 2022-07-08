@@ -15,14 +15,16 @@
 	'author': "F & M Solutions Service S.A.C",
 	'website': "http://www.solse.pe",
 
-	'category': 'Uncategorized',
-	'version': '0.1',
+	'category': 'Financial',
+	'version': '0.2',
 
 	'depends': [
 		'account',
 	],
 	'data': [
+		'security/ir.model.access.csv',
 		'data/tareas_auxiliares.xml',
+		'wizard/agregar_movimientos_destino.xml',
 		'views/account_account.xml',
 		'views/account_move_view.xml',
 	],

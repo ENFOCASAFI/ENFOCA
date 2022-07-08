@@ -17,5 +17,14 @@
             </field>
         </record>
 
+        <record id="generar_asientos_destino" model="ir.actions.act_window">
+            <field name="name">Generar Asiento Destino</field>
+            <field name="res_model">saccount.generar.asientos.destino</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_action_generar_asiento_destino" parent="account.menu_finance_entries_actions" action="generar_asientos_destino" groups="account.group_account_user" sequence="45"/>
+
     </data>
 </odoo>
