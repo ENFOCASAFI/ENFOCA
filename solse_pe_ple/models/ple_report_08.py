@@ -46,6 +46,12 @@ class PLEReport08(models.Model) :
 
 	documento_compra_ids = fields.Many2many('l10n_latam.document.type', 'ple_report_l10n_latam_id', 'report_id', 'doc_id', string='Documentos a incluir', required=False, domain="[('sub_type', 'in', ['purchase'])]")
 	
+	@api.onchange('company_id')
+	def _onchange_company(self):
+		dominio = [('company_id', '=', self.company_id.id), ('sub_type', '=', 'purchase'), ('inc_ple_compras', '=', True)]
+		documentos = self.env['l10n_latam.document.type'].search(dominio)
+		self.documento_compra_ids = [(6, 0, documentos.ids)]
+
 	def get_default_filename(self, ple_id='080100', tiene_datos=False) :
 		name = super().get_default_filename()
 		name_dict = {
@@ -104,7 +110,8 @@ class PLEReport08(models.Model) :
 				sunat_code = move.pe_invoice_code or '00'
 				sunat_partner_code = move.partner_id.l10n_latam_identification_type_id.l10n_pe_vat_code
 				sunat_partner_vat = move.partner_id.vat
-				sunat_partner_name = move.partner_id.legal_name or move.partner_id.name
+				#sunat_partner_name = move.partner_id.legal_name or move.partner_id.name
+				sunat_partner_name = move.partner_id.name
 				move_id = move.l10n_latam_document_number
 				invoice_date = move.invoice_date
 				date_due = move.invoice_date_due
@@ -212,12 +219,22 @@ class PLEReport08(models.Model) :
 					m_01.extend(['1'])
 				else:
 					m_01.extend([''])
-				#35-38 
-				m_01.extend(['', '', '', ''])
+				#35-38
+				tipo_bien_servicio = move.invoice_line_ids.filtered(lambda linea: linea.product_id.product_tmpl_id.tipo_bien_servicio)
+				_logging.info("tipo_bien_servicio")
+				_logging.info(tipo_bien_servicio)
+				if tipo_bien_servicio:
+					tipo_bien_servicio = tipo_bien_servicio[0].product_id.product_tmpl_id.tipo_bien_servicio
+				else:
+					tipo_bien_servicio = ''
+				m_01.extend([tipo_bien_servicio, '', '', ''])
 				#39-43
 				codigo = '1'
 				if invoice_date < fecha_inicio:
 					codigo = '6'
+				if sunat_code in ['02']:
+					codigo = '0'
+
 				m_01.extend(['', '', '',codigo, ''])
 				
 				#m_01.extend(['', '', '', '', '', '', '', '', '', '', codigo, ''])

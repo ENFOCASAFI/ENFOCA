@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from . import l10n_latam_document_type
+from . import product
 from . import account_move
 from . import account_analytic
 from . import res_partner

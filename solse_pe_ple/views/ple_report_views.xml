@@ -23,8 +23,12 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="update_report" string="Actualizar Datos" type="object"/>
-                        <button name="generate_report" string="Generar Estructuras" type="object" class="oe_highlight"/>
+                        <field name="state" invisible="1" />
+                        <button name="update_report" string="Actualizar Datos" type="object" attrs="{'invisible': [('state','=', 'declarado')]}"/>
+                        <button name="generate_report" string="Generar Estructuras" type="object" class="oe_highlight" attrs="{'invisible': [('state','=', 'declarado')]}"/>
+
+                        <button name="declarar_ple" string="Declarar PLE" type="object" attrs="{'invisible': [('state','=', 'declarado')]}"/>
+                        <button name="regresar_borrador" string="Regresar a Borrador" type="object" attrs="{'invisible': [('state','=', 'draft')]}" groups="solse_pe_cpe.group_solse_pe_cpe_accountant"/>
                     </header>
                     <sheet>
                         <div name="button_box" class="oe_button_box"/>

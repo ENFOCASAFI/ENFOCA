@@ -35,6 +35,12 @@ class PLEReport14(models.Model) :
 	ple_xls_02_filename = fields.Char(string='Nombre del Excel 14.2')
 
 	documento_compra_ids = fields.Many2many('l10n_latam.document.type', 'ple_14_report_l10n_latam_id', 'report_14_id', 'doc_14_id', string='Documentos a incluir', required=False, domain="[('sub_type', 'in', ['sale'])]")
+
+	@api.onchange('company_id')
+	def _onchange_company(self):
+		dominio = [('company_id', '=', self.company_id.id), ('sub_type', '=', 'sale'), ('inc_ple_ventas', '=', True)]
+		documentos = self.env['l10n_latam.document.type'].search(dominio)
+		self.documento_compra_ids = [(6, 0, documentos.ids)]
 	
 	def get_default_filename(self, ple_id='140100', tiene_datos=False) :
 		name = super().get_default_filename()
@@ -67,6 +73,7 @@ class PLEReport14(models.Model) :
 			('company_id.partner_id.country_id','=',invoices),
 			('move_type','in',['out_invoice','out_refund']),
 			('state','in',['posted', 'annul', 'cancel']),
+			('estado_sunat','not in',['07', '09']),
 			('invoice_date','>=',str(start)),
 			('invoice_date','<=',str(end)),
 		]
@@ -90,7 +97,8 @@ class PLEReport14(models.Model) :
 				sunat_code = move.pe_invoice_code
 				sunat_partner_code = move.partner_id.l10n_latam_identification_type_id.l10n_pe_vat_code
 				sunat_partner_vat = move.partner_id.vat
-				sunat_partner_name = move.partner_id.legal_name or move.partner_id.name
+				#sunat_partner_name = move.partner_id.legal_name or move.partner_id.name
+				sunat_partner_name = move.partner_id.name
 				move_id = move.id
 				invoice_date = move.invoice_date
 				date_due = move.invoice_date_due
@@ -138,7 +146,20 @@ class PLEReport14(models.Model) :
 				#25-27
 				monto_total = abs(move.amount_total_signed)
 				#m_1.extend([format(move.amount_total, '.2f'), '', ''])
-				m_1.extend([format(monto_total, '.2f'), '', ''])
+				fecha_busqueda = str(invoice_date)
+				currency_rate_id = [
+					('name', '=', fecha_busqueda),
+					('company_id','=', move.company_id.id),
+					('currency_id','=', move.currency_id.id),
+				]
+				currency_rate_id = self.env['res.currency.rate'].sudo().search(currency_rate_id)
+				tipo_cambio = 1.000
+				if currency_rate_id:
+					tipo_cambio = currency_rate_id.rate_pe
+
+				tipo_cambio = format(tipo_cambio, '.3f')
+				
+				m_1.extend([format(monto_total, '.2f'), move.currency_id.name, tipo_cambio])
 				#28-31
 				# notas credito
 				if sunat_code in ['07'] :

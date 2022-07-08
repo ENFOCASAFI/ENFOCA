@@ -92,8 +92,9 @@ class PLEReportTempl(models.Model) :
 	ple_xls_01_filename = fields.Char(string='Nombre del Excel')
 	year = fields.Integer(string='Año', default=lambda self: self._get_default_year())
 	year_char = fields.Char(string='Año (texto)', compute='_compute_year_char')
-	
-	
+
+	state = fields.Selection([('draft', 'Borrador'), ('declarado', 'Declarado')], default='draft')
+		
 	month = fields.Selection(
 		string='Mes', selection=[
 			('1','Enero'),
@@ -116,6 +117,12 @@ class PLEReportTempl(models.Model) :
 	date = fields.Date(string='Fecha', compute='_compute_date', default=lambda self: self._get_default_date(), store=True, readonly=True)
 	date_generated = fields.Datetime(string='Fecha de generación', readonly=True)
 	company_id = fields.Many2one(comodel_name='res.company', string='Compañía', required=True, default=lambda self:self.env.user.company_id)
+
+	def declarar_ple(self):
+		self.state = 'declarado'
+
+	def regresar_borrador(self):
+		self.state = 'draft'
 	
 	@api.onchange('year', 'month', 'day')
 	def _onchange_dates(self) :
