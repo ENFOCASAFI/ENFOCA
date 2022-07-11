@@ -70,8 +70,9 @@ class ImportarFacturasVenta(models.Model):
 
 		return False
 
-
 	def obtener_sale_json_de_xml(self, xml_datos, archivo_binario, nombre_binario):
+		if not xml_datos.getElementsByTagName("cac:Signature"):
+			raise UserError("No se pudo encontrar la serie para el documento %s, revise que sea un xml valido y no un CDR" % nombre_binario)
 		data_serie = xml_datos.getElementsByTagName("cac:Signature")[0].getElementsByTagName("cbc:ID")[0]
 		serie_correlativo = data_serie.firstChild.data
 		opciones_correlativo = xml_datos.getElementsByTagName("cbc:ID")
@@ -95,8 +96,8 @@ class ImportarFacturasVenta(models.Model):
 		data_tipo_doc = xml_datos.getElementsByTagName("cbc:InvoiceTypeCode")[0]
 		tipo_doc = data_tipo_doc.firstChild.data
 
-		data_monto_letras = xml_datos.getElementsByTagName("cbc:Note")[0]
-		monto_letras = data_monto_letras.firstChild.data
+		#data_monto_letras = xml_datos.getElementsByTagName("cbc:Note")[0]
+		#monto_letras = data_monto_letras.firstChild.data
 
 		data_moneda = xml_datos.getElementsByTagName("cbc:DocumentCurrencyCode")[0]
 		moneda = data_moneda.firstChild.data
@@ -124,8 +125,13 @@ class ImportarFacturasVenta(models.Model):
 
 		moneda_id = self.env["res.currency"].search([("name", "=", moneda)], limit=1)
 
-		tipo_documento = self.env["l10n_latam.document.type"].search([("code", "=", "01"), ("sub_type", "=", "sale")], limit=1)
-		entidad = self.obtener_entidad("01", ruc_cliente)
+		entidad = self.obtener_entidad(cliente_tipo_doc, ruc_cliente)
+		if cliente_tipo_doc == '01' or cliente_tipo_doc == '1':
+			tipo_documento = self.env["l10n_latam.document.type"].search([("code", "=", "03"), ("sub_type", "=", "sale")], limit=1)
+		elif cliente_tipo_doc == '06' or cliente_tipo_doc == '6':
+			tipo_documento = self.env["l10n_latam.document.type"].search([("code", "=", "01"), ("sub_type", "=", "sale")], limit=1)
+		else:
+			tipo_documento = self.env["l10n_latam.document.type"].search([("code", "=", "03"), ("sub_type", "=", "sale")], limit=1)
 
 		factura_existe = self.env["account.move"].search([("move_type", "=", "in_invoice"), ("ref", "=", serie_correlativo), ("partner_id", "=", entidad.id)])
 		if factura_existe:
@@ -197,6 +203,7 @@ class ImportarFacturasVenta(models.Model):
 				"quantity": cantidad,
 				"account_id": self.cuenta_lineas_factura.id,
 				"price_unit": precio_para_item,
+				"pe_affectation_code": self.obtener_tipo_afectacion_sale(linea.getElementsByTagName("cac:TaxSubtotal")),
 				"tax_ids": self.obtener_impuestos_sale(linea.getElementsByTagName("cac:TaxSubtotal"), precio_ref),
 			}
 			if descuento:
@@ -233,6 +240,8 @@ class ImportarFacturasVenta(models.Model):
 			"condition": datos['condicion'],
 			"is_validate": True,
 		}
+		if 'l10n_latam_identification_type_id' in datos:
+			json_entidad['l10n_latam_identification_type_id'] = datos["l10n_latam_identification_type_id"]
 		if json_entidad.get('buen_contribuyente', False):
 			json_entidad["buen_contribuyente"] = datos.get('buen_contribuyente')
 			json_entidad["a_partir_del"] = datos.get('a_partir_del')
@@ -266,6 +275,7 @@ class ImportarFacturasVenta(models.Model):
 		json_entidad["doc_number"] = nro_ruc
 		json_entidad["vat"] = nro_ruc
 		entidad = self.env["res.partner"].create(json_entidad)
+
 		return entidad
 
 	def obtener_producto(self, id_producto, nombre_producto):
@@ -296,9 +306,22 @@ class ImportarFacturasVenta(models.Model):
 			impuesto = self.env["account.tax"].search([("type_tax_use", "=", "sale"), ("l10n_pe_edi_tax_code", "=", impuesto_code), ("price_include", "=", False)], limit=1)
 			if not impuesto:
 				impuesto = self.env["account.tax"].search([("type_tax_use", "=", "sale"), ("l10n_pe_edi_tax_code", "=", impuesto_code)], limit=1)
+			
+			if not impuesto:
+				raise UserError('No se encontro registrado un impuesto para el codigo %s de tipo %s' % (impuesto_code, impuesto_type_code))
+				
 			array_ids.append(impuesto.id)
 
 		return [(6, 0,array_ids)]
+
+	def obtener_tipo_afectacion_sale(self, data_impuestos):
+		for data_impuesto in data_impuestos:
+			datos = data_impuesto.getElementsByTagName("cbc:TaxExemptionReasonCode")
+			if datos:
+				tipo_afectacion_code = datos[0].firstChild.data
+				return tipo_afectacion_code
+
+		return False
 
 
 
