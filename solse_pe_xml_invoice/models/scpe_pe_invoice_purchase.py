@@ -72,8 +72,6 @@ class ImportarFacturasCompra(models.Model):
 
 
 	def obtener_compra_json_de_xml(self, xml_datos, archivo_binario, nombre_binario):
-		if not xml_datos.getElementsByTagName("cac:Signature"):
-			raise UserError("No se pudo encontrar la serie para el documento %s, revise que sea un xml valido y no un CDR" % nombre_binario)
 		data_serie = xml_datos.getElementsByTagName("cac:Signature")[0].getElementsByTagName("cbc:ID")[0]
 		serie_correlativo = data_serie.firstChild.data
 		opciones_correlativo = xml_datos.getElementsByTagName("cbc:ID")
@@ -97,20 +95,16 @@ class ImportarFacturasCompra(models.Model):
 		data_tipo_doc = xml_datos.getElementsByTagName("cbc:InvoiceTypeCode")[0]
 		tipo_doc = data_tipo_doc.firstChild.data
 
-		#data_monto_letras = xml_datos.getElementsByTagName("cbc:Note")[0]
-		#monto_letras = data_monto_letras.firstChild.data
+		data_monto_letras = xml_datos.getElementsByTagName("cbc:Note")[0]
+		monto_letras = data_monto_letras.firstChild.data
 
 		data_moneda = xml_datos.getElementsByTagName("cbc:DocumentCurrencyCode")[0]
 		moneda = data_moneda.firstChild.data
 
 		# quien emite la factura
-		"""nodo_proveedor = xml_datos.getElementsByTagName("cac:SignatoryParty")[0]
+		nodo_proveedor = xml_datos.getElementsByTagName("cac:SignatoryParty")[0]
 		ruc_proveedor = nodo_proveedor.getElementsByTagName("cbc:ID")[0].firstChild.data
-		nombre_proveedor = nodo_proveedor.getElementsByTagName("cbc:Name")[0].firstChild.data"""
-
-		nodo_proveedor = xml_datos.getElementsByTagName("cac:AccountingSupplierParty")[0]
-		ruc_proveedor = nodo_proveedor.getElementsByTagName("cbc:ID")[0].firstChild.data
-		nombre_proveedor = nodo_proveedor.getElementsByTagName("cbc:RegistrationName")[0].firstChild.data
+		nombre_proveedor = nodo_proveedor.getElementsByTagName("cbc:Name")[0].firstChild.data
 
 		nodo_cliente = xml_datos.getElementsByTagName("cac:AccountingCustomerParty")[0]
 		data_ruc = nodo_cliente.getElementsByTagName("cbc:ID")[0]
@@ -131,7 +125,7 @@ class ImportarFacturasCompra(models.Model):
 		moneda_id = self.env["res.currency"].search([("name", "=", moneda)], limit=1)
 
 		tipo_documento = self.env["l10n_latam.document.type"].search([("code", "=", "01"), ("sub_type", "=", "purchase")], limit=1)
-		entidad = self.obtener_entidad(cliente_tipo_doc, ruc_proveedor)
+		entidad = self.obtener_entidad("01", ruc_proveedor)
 
 		factura_existe = self.env["account.move"].search([("move_type", "=", "in_invoice"), ("ref", "=", serie_correlativo), ("partner_id", "=", entidad.id)])
 		if factura_existe:
@@ -175,9 +169,8 @@ class ImportarFacturasCompra(models.Model):
 			data_producto = linea.getElementsByTagName("cac:Item")[0]
 			data_item_producto = data_producto.getElementsByTagName("cbc:ID")
 			id_producto = False
-			if data_item_producto and data_item_producto[0].firstChild:
+			if data_item_producto:
 				id_producto = data_item_producto[0].firstChild.data
-
 			nombre_producto = data_producto.getElementsByTagName("cbc:Description")[0].firstChild.data
 
 			reg_producto = self.obtener_producto(id_producto, nombre_producto)
@@ -284,8 +277,6 @@ class ImportarFacturasCompra(models.Model):
 			impuesto = self.env["account.tax"].search([("type_tax_use", "=", "purchase"), ("l10n_pe_edi_tax_code", "=", impuesto_code), ("price_include", "=", False)], limit=1)
 			if not impuesto:
 				impuesto = self.env["account.tax"].search([("type_tax_use", "=", "purchase"), ("l10n_pe_edi_tax_code", "=", impuesto_code)], limit=1)
-			if not impuesto:
-				raise UserError('No se encontro registrado un impuesto para el codigo %s de tipo %s' % (impuesto_code, impuesto_type_code))
 			array_ids.append(impuesto.id)
 
 		return [(6, 0,array_ids)]
