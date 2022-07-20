@@ -21,6 +21,7 @@
 	'data': [
 		'views/res_config_settings_view.xml',
 		'views/account_move_view.xml',
+		'wizard/account_payment_register_views.xml',
 	],
 	'installable': True,
 	'price': 690,
