@@ -116,7 +116,7 @@ class AccountInvoiceLine(models.Model):
 		for rec in self:
 			if rec.discount != 100:
 				pass
-			else:
+			elif rec.pe_affectation_code not in ['11', '12', '13', '14', '15', '16', '17', '21', '31', '32', '33', '34', '35', '36']:
 				rec.pe_affectation_code = '11'
 
 	@api.onchange('pe_affectation_code')
@@ -128,21 +128,29 @@ class AccountInvoiceLine(models.Model):
 		# Catalogo 7
 		# (10) Gravado - Operación Onerosa; ​(11) Gravado - Retiro por premio; ​(12) Gravado - Retiro por donación; ​ ​ 
 		# (13) Gravado - Retiro;​ (14)​ Gravado - Retiro por publicidad; ​ (15) Gravado - Bonificaciones; ​(16)​ Gravado - Retiro por entrega a trabajadores
-		if self.pe_affectation_code in ('10', '11', '12', '13', '14', '15', '16', '17'):
+		if self.pe_affectation_code in ('10'):
 			ids = self.tax_ids.filtered(lambda tax: tax.l10n_pe_edi_tax_code == constantes.IMPUESTO['igv']).ids
 			res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['igv']), ('id', 'in', ids)])
 			if not res:
 				res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['igv'])], limit=1)
 			self.tax_ids = [(6, 0, ids + res.ids)]
 			self._set_free_tax()
+
+		elif self.pe_affectation_code in ('11', '12', '13', '14', '15', '16', '17'):
+			self.tax_ids = [(6, 0, [])]
+			self._set_free_tax()
 		
-		# (20) Exonerado - Operación Onerosa; (21) Exonerado – Transferencia gratuita
-		elif self.pe_affectation_code in ('20', '21'):
+		# (20) Exonerado - Operación Onerosa;
+		elif self.pe_affectation_code in ('20'):
 			ids = self.tax_ids.filtered(lambda tax: tax.l10n_pe_edi_tax_code == constantes.IMPUESTO['exonerado']).ids
 			res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['exonerado']), ('id', 'in', ids)])
 			if not res:
 				res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['exonerado'])], limit=1)
 			self.tax_ids = [(6, 0, ids + res.ids)]
+			self._set_free_tax()
+		# (21) Exonerado – Transferencia gratuita
+		elif self.pe_affectation_code in ('21'):
+			self.tax_ids = [(6, 0, [])]
 			self._set_free_tax()
 		# (30) Inafecto - Operación Onerosa; ​ ​ 
 		elif self.pe_affectation_code in ('30'):
@@ -156,12 +164,8 @@ class AccountInvoiceLine(models.Model):
 		# (33) Inafecto - Retiro por muestras médicas; ​ ​ (34) Inafecto - Retiro por convenio colectivo; ​ ​ (35) Inafecto - Retiro por premio; ​ ​ 
 		# (36) Inafecto - Retiro por publicidad
 		elif self.pe_affectation_code in ('31', '32', '33', '34', '35', '36'):
-			ids = self.tax_ids.filtered(lambda tax: tax.l10n_pe_edi_tax_code == constantes.IMPUESTO['inafecto']).ids
-			res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['inafecto']), ('id', 'in', ids)])
-			if not res:
-				res = self.env['account.tax'].search([('l10n_pe_edi_tax_code', '=', constantes.IMPUESTO['inafecto'])], limit=1)
-			self.tax_ids = [(6, 0, ids + res.ids)]
-			self.discount = 100
+			self.tax_ids = [(6, 0, [])]
+			self._set_free_tax()
 			#self._set_free_tax()
 		# (40) Exportación
 		elif self.pe_affectation_code in ('40', ):
@@ -219,5 +223,18 @@ class AccountInvoiceLine(models.Model):
 			tax_ids = self.tax_ids
 		else:
 			tax_ids = self.tax_ids.filtered(lambda tax: tax.l10n_pe_edi_tax_code != constantes.IMPUESTO['gratuito'])
+
 		res = tax_ids.with_context(round=False).compute_all(price_unit, self.move_id.currency_id, 1, self.product_id, self.move_id.partner_id)
+		return res
+
+	def get_price_unit_sunat(self, all=False):
+		self.ensure_one()
+		price_unit = self.price_unit
+		if all:
+			price_unit = self.price_unit * (1 - (self.discount or 0.0) / 100.0)
+			tax_ids = self.tax_ids
+		else:
+			tax_ids = self.tax_ids.filtered(lambda tax: tax.l10n_pe_edi_tax_code != constantes.IMPUESTO['gratuito'])
+			
+		res = tax_ids.with_context(round=False).compute_all_sunat(price_unit, self.move_id.currency_id, 1, self.product_id, self.move_id.partner_id)
 		return res

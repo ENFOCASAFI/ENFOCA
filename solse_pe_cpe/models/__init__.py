@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from . import account_tax
 from . import constantes
 from . import cpe_certificate
 from . import cpe_server

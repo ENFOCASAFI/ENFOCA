@@ -2,7 +2,7 @@
 
 from odoo import api, fields, tools, models, _
 import odoo.addons.decimal_precision as dp
-from odoo.exceptions import UserError, Warning
+from odoo.exceptions import UserError, Warning, ValidationError
 from pdf417gen.encoding import to_bytes, encode_high, encode_rows
 from pdf417gen.util import chunks
 from pdf417gen.compaction import compact_bytes
@@ -32,10 +32,23 @@ from ast import literal_eval
 import socket
 from binascii import hexlify
 from functools import partial
-TYPE2JOURNAL = {'out_invoice':'sale', 
- 'in_invoice':'purchase',  'out_refund':'sale', 
- 'in_refund':'purchase'}
 
+TYPE2JOURNAL = {
+	'out_invoice':'sale', 
+	'in_invoice':'purchase',  
+	'out_refund':'sale', 
+	'in_refund':'purchase'
+}
+
+"""TYPE2JOURNAL = {
+	'out_invoice':'sale', 
+	'in_invoice':'purchase', 
+}"""
+
+class AccountPaymentRegister(models.TransientModel):
+	_inherit = 'account.payment.register'
+
+	transaction_number = fields.Char(string='Número de operación')
 
 class AccountPayment(models.Model):
 	_inherit = 'account.payment'
@@ -102,6 +115,21 @@ class AccountMove(models.Model):
 	sunat_estado_manual = fields.Char('Estado SUNAT')
 
 	pe_related_ids = fields.Many2many("account.move", string="Facturas relacionadas", compute="_get_related_ids")
+
+	def obtener_datos_entidad_emisora(self):
+		invoice_id = self
+		datos = {
+			'comercial_name': invoice_id.company_id.partner_id.commercial_name.strip() or '-',
+			'legal_name': invoice_id.company_id.partner_id.legal_name.strip() or '-',
+			'ubigeo': invoice_id.company_id.partner_id.l10n_pe_district.code,
+			'pe_branch_code': invoice_id.pe_branch_code or '0000',
+			'province_id': invoice_id.company_id.partner_id.city_id.name.strip(),
+			'state_id': invoice_id.company_id.partner_id.state_id.name,
+			'district_id': invoice_id.company_id.partner_id.l10n_pe_district.name,
+			'street_id': invoice_id.company_id.partner_id.street,
+			'country_code': invoice_id.company_id.partner_id.country_id.code,
+		}
+		return datos
 
 	@api.onchange('invoice_payment_term_id', 'invoice_date_due', 'invoice_date')
 	def _onchange_termino_pago(self):
@@ -283,8 +311,8 @@ class AccountMove(models.Model):
 			if invoice_id.name and invoice_id.l10n_latam_document_type_id.is_cpe:
 				res.append(invoice_id.company_id.partner_id.doc_number)
 				res.append(invoice_id.l10n_latam_document_type_id.code or '')
-				res.append(invoice_id.name.split('-')[0] or '')
-				res.append(invoice_id.name.split('-')[1] or '')
+				res.append(invoice_id.l10n_latam_document_number.split('-')[0] or '')
+				res.append(invoice_id.l10n_latam_document_number.split('-')[1] or '')
 				res.append(str(invoice_id.amount_tax))
 				res.append(str(invoice_id.amount_total))
 				res.append(str(invoice_id.invoice_date))
@@ -308,12 +336,12 @@ class AccountMove(models.Model):
 		for invoice in self:
 			if not all((invoice.name != '/', invoice.l10n_latam_document_type_id.is_cpe, qr_mod)):
 				invoice.sunat_qr_code = ''
-			elif len(invoice.name.split('-')) > 1 and invoice.invoice_date:
+			elif len(invoice.l10n_latam_document_number.split('-')) > 1 and invoice.invoice_date:
 				res = [
 				 invoice.company_id.partner_id.doc_number or '-',
 				 invoice.l10n_latam_document_type_id.code or '',
-				 invoice.name.split('-')[0] or '',
-				 invoice.name.split('-')[1] or '',
+				 invoice.l10n_latam_document_number.split('-')[0] or '',
+				 invoice.l10n_latam_document_number.split('-')[1] or '',
 				 str(invoice.amount_tax), str(invoice.amount_total),
 				 fields.Date.to_string(invoice.invoice_date), invoice.partner_id.doc_type or '-',
 				 invoice.partner_id.doc_number or '-', '']
@@ -336,6 +364,8 @@ class AccountMove(models.Model):
 	def validate_sunat_invoice(self):
 		if self.pe_sunat_transaction51:
 			if self.pe_sunat_transaction51[:2] == '02':
+				if self.partner_id.country_id.code == 'PE':
+					raise UserError('El cliente %s para exportación no es valido' % self.partner_id.display_name)
 				if self.pe_invoice_code in ('01', ):
 					for line in self.invoice_line_ids:
 						if line.pe_affectation_code != '40':
@@ -347,7 +377,7 @@ class AccountMove(models.Model):
 					raise UserError('Para la linea con el producto %s debe ser Exportacion' % line.name)
 
 		for line in self.invoice_line_ids:
-			if line.quantity == 0.0 or line.price_unit == 0.0:
+			if line.display_type == False and (line.quantity == 0.0 or line.price_unit == 0.0):
 				raise UserError('La cantidad o precio del producto %s debe ser mayor a 0.0' % line.name)
 			if not line.tax_ids:
 				if line.quantity > 0:
@@ -397,30 +427,8 @@ class AccountMove(models.Model):
 			raise UserError('La fecha de emision no puede ser menor a 6 dias de hoy ni mayor a la fecha de hoy.')"""
 		company_id = self.company_id.partner_id
 
-	"""def _reverse_moves(self, default_values_list=None, cancel=False):
-		_logging.info('reverse move localllllllllllllll')
-		#res = super(AccountMove, self)._post()
-		invoice_id = super(AccountMove, self)._reverse_moves(default_values_list=default_values_list, cancel=cancel)
-		_logging.info('cantidad36')
-		_logging.info(invoice_id)
-		_logging.info(len(invoice_id))
-		cpe_id = invoice_id.pe_cpe_id
-		cpe_id.generate_cpe()
-		if invoice_id.company_id.pe_is_sync:
-			# validamos que cuando sea desde el POS no se envie por este metodo ya que en ese caso se envia por el propio modulo del POS
-			if invoice_id.l10n_latam_document_type_id.is_synchronous:
-				cpe_id.action_send()
-		
-		if (invoice_id.l10n_latam_document_type_id.code in ('07', '08') and invoice_id.origin_doc_code == '03' or invoice_id.l10n_latam_document_type_id.code == '03') and (not invoice_id.l10n_latam_document_type_id.is_synchronous):
-			pe_summary_id = self.env['solse.cpe'].get_cpe_async('rc', invoice_id)
-			invoice_id.pe_summary_id = pe_summary_id.id
-
-		if invoice_id.company_id.enviar_email:
-			invoice_id.enviarCorreoCPE()
-		return invoice_id"""
-
 	def _post(self, soft=True):
-		res = super()._post(soft=soft)
+		res = super()._post(soft)
 		for invoice_id in res:
 			invoice_id._onchange_termino_pago()
 			invoice_id.action_date_assign()
@@ -439,17 +447,18 @@ class AccountMove(models.Model):
 					else:
 						invoice_id.pe_condition_code = '2'
 
+				# validamos que cuando sea desde el POS no se envie por este metodo ya que en ese caso se envia por el propio modulo del POS
 				if self.env.context.get('is_pos_invoice'):
 					continue
 				if 'pos_order_ids' in self.env['account.move']._fields:
 					if self.pos_order_ids:
 						continue
-				if invoice_id.l10n_latam_document_type_id.code == '07':
-					continue
+
+				#if invoice_id.l10n_latam_document_type_id.code == '07':
+				#	continue
 
 				cpe_id.generate_cpe()
 				if invoice_id.company_id.pe_is_sync:
-					# validamos que cuando sea desde el POS no se envie por este metodo ya que en ese caso se envia por el propio modulo del POS
 					if invoice_id.l10n_latam_document_type_id.is_synchronous:
 						cpe_id.action_send()
 				
@@ -799,6 +808,4 @@ class AccountMove(models.Model):
 				if tipo_doc_id:
 					self.l10n_latam_document_type_id = tipo_doc_id.id
 			return res
-
-
 

@@ -11,7 +11,7 @@ class pe_sunat_server(models.Model):
 	url = fields.Char("Url", required=True)
 	user = fields.Char("Usuario")
 	password = fields.Char("Clave")
-	description = fields.Text("Descripcion")
+	description = fields.Text("Descripción")
 	active = fields.Boolean("Activo", default=True)
 	state = fields.Selection([
 		('draft', 'Borrador'),

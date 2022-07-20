@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
 <data>
-	<template id="solse_pe_cpe.cpe_body_print">
+	<template id="cpe_body_print">
         <t t-if="not company">
             <!-- Multicompany -->
             <t t-if="company_id">
@@ -314,11 +314,16 @@
                             </tr>
                         </thead>
                         <tbody style="border: 0px;margin: 0px; padding: 0px;">
-                            <tr style="margin: 0px; padding: 0px;">
-                                <td class="td-n1" style="border: 0px;margin: 0px; padding: 0px;">Cuota001</td>
-                                <td class="td-n1" style="border: 0px;margin: 0px; padding: 0px;"><span t-esc="'%.2f'%(o.monto_neto_pagar_base)"/></td>
-                                <td class="td-n1" style="border: 0px;margin: 0px; padding: 0px;"><span t-esc="o.invoice_date_due"/></td>
-                            </tr>
+                            <t t-set="contador" t-value="0"/>
+                            <t t-foreach="o.obtener_cuotas_pago()" t-as="cuota">
+                                <t t-set="contador" t-value="contador + 1"/>
+                                <tr style="margin: 0px; padding: 0px;">
+                                    <td class="td-n1" style="border: 0px;margin: 0px; padding: 0px;">Cuota<t t-esc="'{0:03d}'.format(contador)"/></td>
+                                    <td class="td-n1" style="border: 0px;margin: 0px; padding: 0px;"><span t-esc="'%.2f'%(cuota['amount'])"/></td>
+                                    <td class="td-n1" style="border: 0px;margin: 0px; padding: 0px;"><span t-esc="cuota['date_maturity']"/></td>
+                                </tr>
+                            </t>
+                            
                         </tbody>
                      </table>
                 </div>

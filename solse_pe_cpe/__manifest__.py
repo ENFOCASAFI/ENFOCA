@@ -16,6 +16,7 @@
 	'version': '1.0',
 
 	'depends': [
+		'account',
 		'solse_pe_edi',
 		'account_debit_note',
 	],

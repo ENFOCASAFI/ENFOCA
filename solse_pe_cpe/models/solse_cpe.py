@@ -30,6 +30,15 @@ def get_document(self):
 			xml = CPE().getVoidedDocuments(self)
 	return xml
 
+class LogCpe(models.Model):
+	_name = 'solse.cpe.log'
+	_inherit = ['mail.thread', 'mail.activity.mixin']
+	_description = 'Log de comprobantes'
+
+	@api.model 
+	def agregar_log(cpe_id, datos={}):
+		pass
+
 class PeruSunatCpe(models.Model):
 	_name = 'solse.cpe'
 	_description = 'Sunat Perú'
@@ -138,6 +147,7 @@ class PeruSunatCpe(models.Model):
 		if not self.xml_document and self.type == "sync":
 			self._prepare_cpe()
 		self.state = 'draft'
+		self.env['solse.cpe.log'].agregar_log(self)
 
 	# Opcion "Generar"
 	def action_generate(self):
@@ -149,16 +159,19 @@ class PeruSunatCpe(models.Model):
 		if self.type == "sync":
 			self._sign_cpe()
 		self.state = 'generate'
+		self.env['solse.cpe.log'].agregar_log(self)
 
 	# Opcion "Enviar"
 	def action_send(self):
 		state = self.send_cpe()
 		if state:
 			self.state = state
+		self.env['solse.cpe.log'].agregar_log(self)
 
 	# Opcion "Esperar"
 	def action_verify(self):
 		self.state = 'verify'
+		self.env['solse.cpe.log'].agregar_log(self)
 
 	# Opcion "Hecho"
 	def action_done(self):
@@ -169,9 +182,12 @@ class PeruSunatCpe(models.Model):
 		else:
 			self.state = 'done'
 
+		self.env['solse.cpe.log'].agregar_log(self)
+
 	# Opcion "Cancelar"
 	def action_cancel(self):
 		self.state = 'cancel'
+		self.env['solse.cpe.log'].agregar_log(self)
 
 	# proceso para crear "solse.cpe", este proceso es llamado desde "account.move"
 	@api.model
@@ -334,6 +350,7 @@ class PeruSunatCpe(models.Model):
 		self._prepare_cpe()
 		self._sign_cpe()
 		self.state = "generate"
+		self.env['solse.cpe.log'].agregar_log(self)
 
 
 	# (@rpt) enviar cpe individual o resumen
