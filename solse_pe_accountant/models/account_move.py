@@ -4,38 +4,11 @@ from odoo import models, fields, api
 import logging
 _logging = logging.getLogger(__name__)
 
-class AccountPayment(models.Model):
-	_inherit = 'account.payment'
-
-	transaction_number = fields.Char(string='Número de operación')
-
-class AccountMoveLine(models.Model):
-	_inherit = 'account.move.line'
-
-	transaction_number = fields.Char(related='payment_id.transaction_number', store=True)
-
-class StatementLine(models.Model):
-	_inherit = 'account.bank.statement.line'
-
-	transaction_number = fields.Char(string='Número de transacción')
-
 
 class AccountMove(models.Model):
 	_inherit = 'account.move'
 
-	transaction_number = fields.Char(related='payment_id.transaction_number', store=True)
 	asiento_det_ret = fields.Many2one('account.move', string='Asiento retención/detracción')
-	pago_detraccion = fields.Many2one('account.payment', 'Pago de Detracción/Retención')
-
-	es_x_apertura = fields.Boolean("Movimiento por Apertura")
-	fecha_apertura = fields.Date("Fecha Apertura", default=fields.Date.context_today, readonly=True, states={'draft': [('readonly', False)]},)
-
-	@api.onchange('es_x_apertura', 'fecha_apertura')
-	def _onchange_fecha_apertura(self):
-		if self.es_x_apertura and self.fecha_apertura:
-			self.date = self.fecha_apertura or fields.Date.context_today(self)
-		else:
-			self.date = self.invoice_date or fields.Date.context_today(self)
 
 	def _post(self, soft=True):
 		res = super(AccountMove, self)._post()
@@ -98,15 +71,18 @@ class AccountMove(models.Model):
 					'exclude_from_invoice_tab': True,
 				}))
 
-			diario_aplicar = self.env["account.journal"].search([("type", "=", "general")], limit=1)
-			paramtros_retencion = {
-				"move_type": "entry",
-				"journal_id": diario_aplicar.id,
-				"line_ids": lineas_crear,
+			datos_factura = {
+				'journal_id': invoice_id.journal_id.id,
+				'company_id': invoice_id.company_id.id,
+				'move_type': 'in_invoice',
+				'partner_id': self.contacto_asignado.id or contacto_defecto.id,
+				"provision_id": self.id,
+				'es_por_provision': True,
+				'tipo_cuota': 'factura',
+				'es_por_cuota': False,
+				'invoice_line_ids': lineas_crear,
 			}
-			factura_retencion = self.env['account.move'].create(paramtros_retencion)
-			factura_retencion.action_post()
-			invoice_id.asiento_det_ret = factura_retencion.id
+			invoice_id.line_ids = lineas_crear
 
 	def agregar_movimiento_detraccion(self):
 		invoice_id = self
@@ -163,14 +139,4 @@ class AccountMove(models.Model):
 					'amount_currency': invoice_id.monto_detraccion_base * -1,
 					'exclude_from_invoice_tab': True,
 				}))
-
-			diario_aplicar = self.env["account.journal"].search([("type", "=", "general")], limit=1)
-			paramtros_detraccion = {
-				"move_type": "entry",
-				"journal_id": diario_aplicar.id,
-				"line_ids": lineas_crear,
-			}
-			factura_detraccion = self.env['account.move'].create(paramtros_detraccion)
-			factura_detraccion.action_post()
-			invoice_id.asiento_det_ret = factura_detraccion.id
-			#invoice_id.line_ids = lineas_crear
+			invoice_id.line_ids = lineas_crear
