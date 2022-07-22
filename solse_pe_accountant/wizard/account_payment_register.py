@@ -40,20 +40,12 @@ class AccountPaymentRegister(models.TransientModel):
 	def _onchange_detraccion_retencion(self):
 		factura = self.line_ids[0].move_id
 		self.payment_difference_handling = "open"
-		if factura.company_id.currency_id.id == self.currency_id.id:
-			if self.es_detraccion_retencion:
-				self.amount = factura.monto_detraccion + factura.monto_retencion
-			else:
-				#source_amount = abs(factura.amount_residual)
-				source_amount = self.source_amount
-				self.amount = source_amount - factura.monto_detraccion - factura.monto_retencion
+                if self.es_detraccion_retencion:
+                        self.currency_id = self.env.ref("base.PEN")
+			self.amount = factura.monto_detraccion + factura.monto_retencion
 		else:
-			if self.es_detraccion_retencion:
-				self.amount = factura.monto_detraccion_base + factura.monto_retencion_base
-			else:
-				#amount_residual_signed = abs(factura.amount_residual_signed)
-				source_amount_currency = self.source_amount_currency
-				self.amount = source_amount_currency - factura.monto_detraccion_base - factura.monto_retencion_base
+                        self.currency_id = factura.currency_id
+		        self.amount = factura.amount_currency - factura.monto_detraccion_base - factura.monto_retencion_base
 
 	def _create_payment_vals_from_wizard(self):
 		payment_vals = super(AccountPaymentRegister, self)._create_payment_vals_from_wizard()
