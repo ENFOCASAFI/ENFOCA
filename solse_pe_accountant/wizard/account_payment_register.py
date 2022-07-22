@@ -40,6 +40,7 @@ class AccountPaymentRegister(models.TransientModel):
 	def _onchange_detraccion_retencion(self):
 		factura = self.line_ids[0].move_id
 		self.payment_difference_handling = "open"
+
                 if self.es_detraccion_retencion:
                         self.currency_id = self.env.ref("base.PEN")
 	                self.amount = factura.monto_detraccion + factura.monto_retencion
