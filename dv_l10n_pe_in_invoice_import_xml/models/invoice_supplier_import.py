@@ -198,8 +198,10 @@ class InvoiceSupplierImport(models.Model):
         _logger.info("account_move_data")
         _logger.info(account_move_data)
         invoice_id = self.env['account.move'].create(account_move_data)
+        _logger.info("invoice_id 1")
+        _logger.info(invoice_id)
         invoice_id.invoice_line_ids = account_move_lines
-        _logger.info("invoice_id")
+        _logger.info("invoice_id 2")
         _logger.info(invoice_id)
         invoice_id._onchange_invoice_line_ids()
         for line in invoice_id.invoice_line_ids:
