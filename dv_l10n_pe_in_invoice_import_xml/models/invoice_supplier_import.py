@@ -1,4 +1,6 @@
-from locale import currency
+import logging
+
+_logger = logging.getLogger(__name__)
 from odoo import api, fields, models
 import base64
 from xml.dom import minidom
