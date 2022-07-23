@@ -43,7 +43,7 @@ class InvoiceSupplierImport(models.Model):
 
     def action_import_attachments(self):
         for attachment in self.attachment_ids:
-            if attachment.mimetype != 'text/xml':
+            if attachment.mimetype.split('/')[1] != 'xml':
                 continue
             decoded_data = base64.b64decode(attachment.datas)
             dom = minidom.parseString(decoded_data)
