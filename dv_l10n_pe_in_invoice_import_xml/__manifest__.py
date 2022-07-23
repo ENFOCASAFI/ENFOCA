@@ -22,6 +22,7 @@
 
     'depends': [
         'base',
+        'l10n_pe',
         'account',
     ],
 
