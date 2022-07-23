@@ -89,7 +89,7 @@ class InvoiceSupplierImport(models.Model):
             tax = self.env["account.tax"].search(
                 [("type_tax_use", "=", "purchase"), ('l10n_pe_edi_tax_code', '=', tax_code.strip()),
                 ("price_include", "=", False)], limit=1)
-            taxes.append(tax.id)
+            taxes.append((4, tax.id, 0))
         return taxes
     
     def get_move_lines_from_xml(self, xml_data):
