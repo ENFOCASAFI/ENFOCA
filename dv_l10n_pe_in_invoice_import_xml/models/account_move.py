@@ -5,7 +5,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class import_xml(models.Model):
+class AccountMove(models.Model):
     _inherit = 'account.move'
 
     invoice_supplier_import_id = fields.Many2one(
@@ -14,6 +14,9 @@ class import_xml(models.Model):
     data_xml = fields.Binary(string="XML")
     datas_fname_pdf = fields.Char("Nombre pdf")
     data_pdf = fields.Binary(string="PDF")
+
+class AccountMoveLine(models.Model):
+    _inherit = 'account.move.line'
 
     @api.constrains('account_id', 'journal_id')
     def _check_constrains_account_id_journal_id(self):
