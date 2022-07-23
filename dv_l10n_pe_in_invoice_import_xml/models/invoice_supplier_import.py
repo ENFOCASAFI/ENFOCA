@@ -200,6 +200,7 @@ class InvoiceSupplierImport(models.Model):
         invoice_id = self.env['account.move'].create(account_move_data)
         _logger.info("invoice_id 1")
         _logger.info(invoice_id)
+        """
         invoice_id.invoice_line_ids = account_move_lines
         _logger.info("invoice_id 2")
         _logger.info(invoice_id)
@@ -207,6 +208,7 @@ class InvoiceSupplierImport(models.Model):
         for line in invoice_id.invoice_line_ids:
             line._onchange_account_id()
             line._onchange_price_subtotal()
+        """
         return invoice_id
   
         #return provider
