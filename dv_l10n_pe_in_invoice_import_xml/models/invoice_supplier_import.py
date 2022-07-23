@@ -192,11 +192,13 @@ class InvoiceSupplierImport(models.Model):
             'datas_fname': nombre_binario,
             "data_pdf": pdf_binary,
             "datas_fname_pdf": nombre_pdf,
-            'invoice_line_ids': account_move_lines
         }
+
+        
         _logger.info("account_move_data")
         _logger.info(account_move_data)
         invoice_id = self.env['account.move'].create(account_move_data)
+        invoice_id.invoice_line_ids = account_move_lines
         _logger.info("invoice_id")
         _logger.info(invoice_id)
         invoice_id._onchange_invoice_line_ids()
