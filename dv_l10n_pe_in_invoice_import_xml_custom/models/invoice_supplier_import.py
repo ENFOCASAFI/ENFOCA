@@ -11,5 +11,5 @@ class InvoiceSupplierImport(models.Model):
         currency_code = xml_data.getElementsByTagName(
             "cbc:DocumentCurrencyCode")[0].firstChild.data
         currency_id = self.env["res.currency"].search(
-            [("name", "=", currency_code), ('rate_type', '=', 'sale')], limit=1)
+            [("name", "=", currency_code), ('rate_type', '=', 'sell')], limit=1)
         return currency_id
