@@ -159,7 +159,7 @@ class InvoiceSupplierImport(models.Model):
         }
         provider = self.create_model_registry_if_not_exists(
             'res.partner', 'vat', ruc_provider, provider_data)
-        """
+
         # Create account move (Factura de compra)
         invoice_date = xml_data.getElementsByTagName("cbc:IssueDate")[
             0].firstChild.data
@@ -192,12 +192,15 @@ class InvoiceSupplierImport(models.Model):
             "datas_fname_pdf": nombre_pdf,
             'invoice_line_ids': account_move_lines
         }
-
+        _logger.info("account_move_data")
+        _logger.info(account_move_data)
         invoice_id = self.env['account.move'].create(account_move_data)
+        _logger.info("invoice_id")
+        _logger.info(invoice_id)
         invoice_id._onchange_invoice_line_ids()
         for line in invoice_id.invoice_line_ids:
             line._onchange_account_id()
             line._onchange_price_subtotal()
         return invoice_id
-        """
-        return provider
+  
+        #return provider
