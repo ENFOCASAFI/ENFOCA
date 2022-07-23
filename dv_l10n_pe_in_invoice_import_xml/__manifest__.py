@@ -1,6 +1,6 @@
 {
     'name': """
-        dv_l10n_pe_in_invoice_import_xml
+        Crear Factura de Proveedor desde XML
     """,
 
     'summary': """
@@ -28,7 +28,7 @@
 
     'data': [
         'security/ir.model.access.csv',
-        'views/model_template_views.xml',
+        'views/account_move_views.xml',
         'views/invoice_supplier_import_views.xml',
         'views/menuitem_views.xml',
     ],

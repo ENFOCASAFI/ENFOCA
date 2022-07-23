@@ -58,7 +58,7 @@ class InvoiceSupplierImport(models.Model):
         """
             Obtiene el PDF de la factura
         """
-        pdf_files = self.attachment_ids.filter(lambda x: x.name == name)
+        pdf_files = self.attachment_ids.filtered(lambda x: x.name == name)
         if pdf_files:
             pdf_datas =  pdf_files[0].datas
         else:
