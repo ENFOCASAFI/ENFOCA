@@ -1,0 +1,1 @@
+* 05/09/2022: Se deja editable el campo nombre comercial del contacto
