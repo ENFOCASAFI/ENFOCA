@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	
+
+	<record id="view_currency_form_solse_edi" model="ir.ui.view">
+		<field name="name">res.currency.inherit.solse.edi.view.form</field>
+		<field name="model">res.currency</field>
+		<field name="inherit_id" ref="base.view_currency_form"/>
+		<field name="arch" type="xml">
+
+			<xpath expr="//field[@name='position']" position="after">
+				<field name="singular_name"/>
+				<field name="plural_name"/>
+			</xpath>
+			
+		</field>
+	</record>
+</odoo>
