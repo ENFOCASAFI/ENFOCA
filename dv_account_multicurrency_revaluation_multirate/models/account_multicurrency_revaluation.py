@@ -4,7 +4,6 @@ from itertools import chain
 from odoo.tools import float_is_zero, classproperty
 
 
-
 class MulticurrencyRevaluationReport(models.Model):
     """Manage Unrealized Gains/Losses.
     In multi-currencies environments, we need a way to control the risk related
@@ -22,13 +21,14 @@ class MulticurrencyRevaluationReport(models.Model):
     _auto = False
 
     _order = "report_include desc, currency_code desc, account_code asc, date desc, id desc"
-    
+
     @classproperty
     def _depends(cls):
         ret = dict(super()._depends)
         ret.setdefault('account.partial.reconcile', []).extend([
             'amount',
-            *(f'{side}_{field}' for side in ('debit', 'credit') for field in ('move_id', 'currency_id', 'amount_currency')),
+            *(f'{side}_{field}' for side in ('debit', 'credit')
+              for field in ('move_id', 'currency_id', 'amount_currency')),
         ])
         ret.setdefault('account.move.line', []).extend([
             'amount_residual',
@@ -42,8 +42,10 @@ class MulticurrencyRevaluationReport(models.Model):
     total_line = False
     filter_analytic = True
 
-    report_amount_currency = fields.Monetary(string='Balance in foreign currency')
-    report_amount_currency_current = fields.Monetary(string='Balance at current rate')
+    report_amount_currency = fields.Monetary(
+        string='Balance in foreign currency')
+    report_amount_currency_current = fields.Monetary(
+        string='Balance at current rate')
     report_adjustment = fields.Monetary(string='Adjustment')
     report_balance = fields.Monetary(string='Balance at operation rate')
     report_currency_id = fields.Many2one('res.currency')
@@ -68,10 +70,12 @@ class MulticurrencyRevaluationReport(models.Model):
 
     def _get_reports_buttons(self, options):
         r = super()._get_reports_buttons(options)
-        r.append({'name': _('Adjustment Entry'), 'action': 'view_revaluation_wizard'})
+        r.append({'name': _('Adjustment Entry'),
+                  'action': 'view_revaluation_wizard'})
         return r
 
-    def _get_column_details(self, options):currency_rates
+    def _get_column_details(self, options):
+        columns_header = [
             self._header_column(),
             self._field_column('report_amount_currency'),
             self._field_column('report_balance'),
@@ -90,33 +94,42 @@ class MulticurrencyRevaluationReport(models.Model):
 
     def _format_all_line(self, res, value_dict, options):
         if value_dict.get('report_currency_id'):
-            res['columns'][0] = {'name': self.format_value(value_dict['report_amount_currency'], self.env['res.currency'].browse(value_dict.get('report_currency_id')[0]))}
-        res['included'] = value_dict.get('report_included')currency_rates
-        res['class'] = 'no_print' if not value_dict.get('report_include') else ''
+            res['columns'][0] = {'name': self.format_value(
+                value_dict['report_amount_currency'], self.env['res.currency'].browse(value_dict.get('report_currency_id')[0]))}
+        res['included'] = value_dict.get('report_included')#currency_rates
+        res['class'] = 'no_print' if not value_dict.get(
+            'report_include') else ''
 
     def _format_report_currency_id_line(self, res, value_dict, options):
         res['name'] = '{for_cur} (1 {comp_cur} = {rate:.6} {for_cur})'.format(
-            for_cur=options['currency_rates'][str(value_dict.get('report_currency_id')[0])]['display_name'],
+            for_cur=options['currency_rates'][str(
+                value_dict.get('report_currency_id')[0])]['display_name'],
             comp_cur=self.env.company.currency_id.display_name,
-            rate=float(options['currency_rates'][str(value_dict.get('report_currency_id')[0])]['rate']),
+            rate=float(options['currency_rates'][str(
+                value_dict.get('report_currency_id')[0])]['rate']),
         )
 
     def _format_account_id_line(self, res, value_dict, options):
-        res['name'] = '%s %s' % (value_dict['account_code'], value_dict['account_name'])
+        res['name'] = '%s %s' % (
+            value_dict['account_code'], value_dict['account_name'])
 
     def _format_id_line(self, res, value_dict, options):
-        res['name'] = self._format_aml_name(value_dict['name'], value_dict['move_ref'], value_dict['move_name'])
+        res['name'] = self._format_aml_name(
+            value_dict['name'], value_dict['move_ref'], value_dict['move_name'])
         res['caret_options'] = 'account.move'
 
     def _format_report_include_line(self, res, value_dict, options):
-        res['name'] = _('Accounts to adjust') if value_dict.get('report_include') else _('Excluded Accounts')
+        res['name'] = _('Accounts to adjust') if value_dict.get(
+            'report_include') else _('Excluded Accounts')
         res['columns'] = [{}, {}, {}, {}]
 
     # ACTIONS
     def toggle_provision(self, options, params):
         """Include/exclude an account from the provision."""
-        account = self.env['account.account'].browse(int(params.get('account_id')))
-        currency = self.env['res.currency'].browse(int(params.get('currency_id')))
+        account = self.env['account.account'].browse(
+            int(params.get('account_id')))
+        currency = self.env['res.currency'].browse(
+            int(params.get('currency_id')))
         if currency in account.exclude_provision_currency_ids:
             account.exclude_provision_currency_ids -= currency
         else:
@@ -128,7 +141,8 @@ class MulticurrencyRevaluationReport(models.Model):
 
     def view_revaluation_wizard(self, context):
         """Open the revaluation wizard."""
-        form = self.env.ref('dv_account_multicurrency_revaluation_multirate.view_account_multicurrency_revaluation_wizard', False)
+        form = self.env.ref(
+            'dv_account_multicurrency_revaluation_multirate.view_account_multicurrency_revaluation_wizard', False)
         return {
             'name': _('Make Adjustment Entry'),
             'type': 'ir.actions.act_window',
@@ -166,7 +180,7 @@ class MulticurrencyRevaluationReport(models.Model):
                 'display_name': f"{currency_id.name}/Compra" if currency_id.rate_type == 'purchase' else f"{currency_id.name}/Venta",
                 'currency_name': f"{currency_id.name}/Compra" if currency_id.rate_type == 'purchase' else f"{currency_id.name}/Venta",
                 'currency_main': self.env.company.currency_id.name,
-                #'rate': round(1 / rates[currency_id.id], 3),
+                # 'rate': round(1 / rates[currency_id.id], 3),
                 'rate': (round(1 / rates[currency_id.id], 3)
                          if not (previous_options or {}).get('currency_rates', {}).get(str(currency_id.id), {}).get('rate') else
                          float(previous_options['currency_rates'][str(currency_id.id)]['rate'])),
