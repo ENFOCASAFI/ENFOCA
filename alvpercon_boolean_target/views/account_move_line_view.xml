@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	
+	<record id="view_move_line_targetb" model="ir.ui.view">
+		<field name="name">account.move.line.targetb</field>
+		<field name="model">account.move.line</field>
+		<field name="inherit_id" ref="account.view_move_line_tree_grouped"/>
+		<field name="arch" type="xml">
+			<xpath expr="//field[@name='company_currency_id']" position="after">
+            	<field name="target_account_b" optional="hide"/>
+				<field name="target_accountb" optional="hide"/>
+				<!-- <field name="currency_multirate_conversion_affected_s" optional="hide" /> -->
+												
+            </xpath>
+			
+		</field>
+	</record>
+
+	
+</odoo>
