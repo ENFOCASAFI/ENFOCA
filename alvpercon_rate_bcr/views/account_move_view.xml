@@ -33,8 +33,8 @@
 				<field name="credit_d" sum="Total credit_d" optional="hide"/>
 				<field name="credit_da" sum="Total credit_d" invisible = "1"/>
 				<!-- <field name="amount_currency_d" optional="hide"/> -->
-				<field name="amount_currency_d" sum="Total amount_currency_d" optional="hide"/>
-				<field name="amount_currency_rd" sum="Total amount_currency_rd" invisible = "1" optional="hide"/>
+				<field name="amount_currency_d" sum="Total amount_currency_d" invisible = "1" optional="hide"/>
+				<field name="amount_currency_rd" sum="Total amount_currency_rd" invisible = "0" optional="hide"/>
 												
             </xpath>
 			<xpath expr="//field[@name='date']" position="after">

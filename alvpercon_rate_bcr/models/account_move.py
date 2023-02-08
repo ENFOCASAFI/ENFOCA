@@ -21,7 +21,9 @@ class AccountMoveLine(models.Model):
 	credit_da = fields.Float('Crédito Dolar', related="credit_d" , store=True)
 	date_related = fields.Date("Fecha relacionada", related="move_id.invoice_date")
 	invoice_date = fields.Date("Fecha Factura", compute="_compute_invoice_date")
-	amount_currency_d = fields.Float('Importe en Dólares', compute="_compute_importe_d" , digits=(12,2) , store=True )
+	#amount_currency_d = fields.Float('Importe en Dólares', compute="_compute_importe_d" , digits=(12,2) , store=True )
+	amount_currency_d = fields.Float('Importe en Dólares', compute="_compute_importe_d" , digits=(12,2) )
+	#amount_currency_rd = fields.Float('Importe en Dólares.', related ="amount_currency_d" , digits=(12,2) , store=True )
 	amount_currency_rd = fields.Float('Importe en Dólares.', related ="amount_currency_d" , digits=(12,2) , store=True )
 	date_acc_entry = fields.Date("Fecha Asiento", related="origin_move_line_id.invoice_date") # campo instalado desde solse_target_move para fecha de asiento
 	es_x_apertrel = fields.Boolean("Movimiento por Apertura", related="move_id.es_x_apertura") ##**** al activar movimiento de apertura
@@ -167,6 +169,8 @@ class AccountMoveLine(models.Model):
 							else:
 								reg.credit_d = round(abs(reg.amount_currency/reg.tipo_cambio_r),2)
 		
+	@api.depends('currency_id', 'amount_currency', 'es_x_apertrel','tipo_cambio_r')
 	def _compute_importe_d(self):
 		for reg in self:
 			reg.amount_currency_d = round(reg.debit_d - reg.credit_d,2)
+			reg.amount_currency_rd = round(reg.debit_d - reg.credit_d,2)
