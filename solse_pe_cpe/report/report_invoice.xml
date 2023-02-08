@@ -242,7 +242,14 @@
 					<div class="col-4 detalles-precio">
 						<div class="row" style="padding: 1px;">
 							<div class="col-6 cpe-gris"> OP. GRAVADAS </div>
-                            <div class="col-6 text-right border-n1"> <span t-field="o.total_operaciones_gravadas_dolar"/> </div>
+                            <div class="col-6 text-right border-n1"> 
+                            	<t t-if="o.currency_id.name == 'USD'">
+                            		<span t-field="o.total_operaciones_gravadas_dolar"/> 
+                            	</t>
+                            	<t t-else="">
+                            		<span t-field="o.total_operaciones_gravadas"/> 
+                            	</t>
+                            </div>
 						</div>
 
 						<!--Tax totals-->
@@ -313,9 +320,24 @@
 					</div>
 
 					<div class="row texto-12">
-						<div style="font-weight: bold;" class="col-3 text-left"> Detracción ( <t t-esc="o.porc_detraccion"/> %)</div>
+						<div style="font-weight: bold;" class="col-3 text-left"> Detracción </div>
 						<div class="text-right"> 
-							<t t-esc="o.currency_id.symbol"/><span class="text-nowrap" t-esc="'%.2f'%(o.monto_detraccion_base)"/> 
+							<span class="text-nowrap"><t t-esc="o.porc_detraccion"/> %</span>
+						</div>
+					</div>
+
+					<div class="row texto-12">
+						<div style="font-weight: bold;" class="col-3 text-left"> Monto Detracción </div>
+						<div class="text-right"> 
+							<t t-esc="o.company_id.currency_id.symbol"/><span class="text-nowrap" t-esc="'%.2f'%(o.monto_detraccion)"/> 
+						</div>
+					</div>
+
+					<div t-if="o.currency_id.id != o.company_id.currency_id.id" class="row texto-12">
+						<div style="font-weight: bold;" class="col-3 text-left"> Detracción Dolares</div>
+						<div class="text-right"> 
+							<t t-esc="o.currency_id.symbol"/> 
+							<span class="text-nowrap" t-esc="'%.2f'%(o.monto_detraccion_base)"/> 
 						</div>
 					</div>
 
@@ -332,6 +354,25 @@
 						</div>
 					</div>
 				</div>
+				<div  t-if="o.tiene_retencion">
+                    <div class="row texto-12">
+                        <div style="font-weight: bold;" class="col-3 text-left"> 
+                        	Retención ( <t t-esc="company.por_retencion" /> %)
+                        </div>
+                        <div class="text-right"> 
+                            <t t-esc="o.currency_id.symbol"/>
+                            <span class="text-nowrap" t-esc="'%.2f'%(o.monto_retencion_base)"/> 
+                        </div>
+                    </div>
+
+                    <div class="row texto-12">
+                        <div style="font-weight: bold;" class="col-3 text-left"> Neto a Pagar</div>
+                        <div class="text-right"> 
+                            <t t-esc="o.currency_id.symbol"/> 
+                            <span class="text-nowrap" t-esc="'%.2f'%(o.monto_neto_pagar_base)"/> 
+                        </div>
+                    </div>
+                </div>
 				
 				<div style="border: 1px solid #ddd !important; border-radius: 6px; width: 100%;" class="defaulttable numeros-texto">
 					 SON: <span t-field="o.amount_text" /><br/>

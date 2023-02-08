@@ -34,3 +34,12 @@
 # 21/10/2022
 * Se mejora visualizacion de descuento cuanto tiene muchos decimales
 * Se aumenta el ancho del campo "Número" y "Cliente" en la vista lista de Facturas
+
+# 24/10/2022
+* Se mejora visualizacion de montos de retención.
+
+# 30/11/2022
+* Se soluciona bug en notas de credito que tenian como origen facturas con descuento.
+
+# 10/11/2022
+* Se soluciona bug al visualizar monto de operacion gravada cuando es en dolares

@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2019-2022 Juan Gabriel Fernandez More (kiyoshi.gf@gmail.com)
+# Distributed under the MIT software license, see the accompanying
+# file COPYING or http://www.opensource.org/licenses/mit-license.php
+
 from odoo import models, fields, api, _
 from .cpe_core import get_sign_document, send_sunat_cpe, get_ticket_status, get_response, get_status_cdr
 from base64 import b64decode, b64encode

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2019-2022 Juan Gabriel Fernandez More (kiyoshi.gf@gmail.com)
+# Distributed under the MIT software license, see the accompanying
+# file COPYING or http://www.opensource.org/licenses/mit-license.php
 
 from odoo import api, fields, tools, models, _
 import odoo.addons.decimal_precision as dp
@@ -1131,11 +1134,14 @@ class AccountMove(models.Model):
 
 	# metodo usado desde la busqueda de la web que usas los clientes para revisar las facturas que se les han emitido
 	def get_public_cpe(self):
+		_logging.info("llegooo get_public_cpe")
 		self.ensure_one()
 		res = {}
 		if self.l10n_latam_document_type_id.is_cpe:
+			_logging.info("paso primer ir")
 			if self.pe_cpe_id:
-				temporal = self.env['ir.actions.report']._get_report_from_name('account.report_invoice')
+				_logging.info("paso segundoooooooooo ir")
+				temporal = self.env['ir.actions.report'].sudo()._get_report_from_name('account.report_invoice')
 				result_pdf, type = temporal._render_qweb_pdf(self.ids)
 				res['datas_sign'] = str(self.pe_cpe_id.datas_sign, 'utf-8')
 				res['datas_invoice'] = str(encodestring(result_pdf), 'utf-8')
