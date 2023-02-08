@@ -18,7 +18,7 @@
 	'website': "https://www.solse.pe",
 	'category': 'Financial',
 	'version': '15.0.1.4',
-	'license': 'Other proprietary',
+	'license': 'LGPL-3',
 	'depends': [
 		'account',
 		'solse_pe_cpe_report',

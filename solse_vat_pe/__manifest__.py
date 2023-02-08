@@ -19,7 +19,7 @@
 
 	'category': 'Uncategorized',
 	'version': '15.0.1.6',
-	'license': 'Other proprietary',
+	'license': 'LGPL-3',
 	'depends': ['base', 'l10n_pe'],
 
 	'data': [
