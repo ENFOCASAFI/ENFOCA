@@ -33,7 +33,7 @@
 		'views/ple_report_views.xml',
 		'views/ple_menu_view.xml',
 	],
-	'license': 'Other proprietary',
+	'license': 'LGPL-3',
 	'external_dependencies': {
 		'python': [
 			'pandas',
