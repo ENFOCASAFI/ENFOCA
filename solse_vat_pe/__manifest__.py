@@ -16,9 +16,10 @@
 
 	'author': "F & M Solutions Service S.A.C",
 	'website': "http://www.solse.pe",
-    'license': 'LGPL-3',
+
 	'category': 'Uncategorized',
-	'version': '15.0.1.5',
+	'version': '15.0.1.6',
+	'license': 'Other proprietary',
 	'depends': ['base', 'l10n_pe'],
 
 	'data': [

@@ -164,7 +164,7 @@ class Partner(models.Model):
 	@api.model
 	def consulta_datos_completo(self, tipo_documento, nro_documento, format='json'):
 		res = {'error': True, 'message': None, 'data': {}, 'registro': False}
-		res_partner = self.search([('vat', '=', nro_documento)], limit=1)
+		res_partner = self.search(['|', ('vat', '=', nro_documento), ('doc_number', '=', nro_documento)], limit=1)
 		# Si el nro. de doc. ya existe
 		if res_partner:
 			res['message'] = 'Nro. doc. ya existe'

@@ -146,6 +146,7 @@ class ImportarFacturasCompra(models.Model):
 		datos_json = {
 			"partner_id": entidad.id,
 			'company_id': self.company_id.id,
+			"journal_id": self.diario.id,
 			"invoice_date": fecha_factura,
 			"move_type": "in_invoice",
 			"xml_import_id": self.id,

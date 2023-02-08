@@ -16,9 +16,9 @@ class GenerarAsientosDestino(models.TransientModel):
 	
 	def crear_movimientos(self):
 		#self.env['account.move'].generar_asientos_destino_falantes()
-		dominio = [("move_type", "=", "in_invoice"), ("state", "=", "posted"), ("target_move_count", "=", 0)]
+		dominio = [("move_type", "in", ["in_invoice", "entry"]), ("state", "=", "posted"), ("target_move_count", "=", 0)]
 		if self.fecha_ini and self.fecha_fin:
-			dominio.extend([('invoice_date', '>=', self.fecha_ini), ('invoice_date', '<=', self.fecha_fin)])
+			dominio.extend([('date', '>=', self.fecha_ini), ('date', '<=', self.fecha_fin)])
 		facturas = self.env['account.move'].search(dominio)
 		for move in facturas:
 			try:

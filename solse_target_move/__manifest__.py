@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2019-2020 Juan Gabriel Fernandez More (kiyoshi.gf@gmail.com)
+# Copyright (c) 2019-2023 Juan Gabriel Fernandez More (kiyoshi.gf@gmail.com)
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,11 +15,13 @@
 
 	'author': "F & M Solutions Service S.A.C",
 	'website': "http://www.solse.pe",
-    'license': 'LGPL-3',
+
 	'category': 'Financial',
-	'version': '15.1.0.3',
+	'version': '15.1.0.6',
+	'license': 'Other proprietary',
 	'depends': [
 		'account',
+		'solse_pe_accountant',
 	],
 	'data': [
 		'security/ir.model.access.csv',

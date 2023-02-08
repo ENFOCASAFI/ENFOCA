@@ -34,7 +34,7 @@ class AccountMove(models.Model):
 			record.target_move_count = account_move.search_count([('origin_move_id', '=', record.id)])
 
 	def generar_asientos_destino_falantes(self):
-		facturas = self.env['account.move'].search([("move_type", "=", "in_invoice"), ("state", "=", "posted"), ("target_move_count", "=", 0)])
+		facturas = self.env['account.move'].search([("move_type", "in", ["in_invoice", "entry"]), ("state", "=", "posted"), ("target_move_count", "=", 0)])
 		for move in facturas:
 			move.crear_asiento_destino()
 
@@ -47,6 +47,7 @@ class AccountMove(models.Model):
 					'origin_move_id': move.id,
 					'origin_move_line_id': l.id,
 					'ref': l.name,
+					'glosa': l.glosa,
 					'date': l.date,
 					'journal_id': l.account_id.target_journal_id and l.account_id.target_journal_id.id or False,
 					'move_type': 'entry',
@@ -59,6 +60,7 @@ class AccountMove(models.Model):
 				'origin_move_line_id': l.id,
 				'name': l.name,
 				'ref': move.name,
+				'glosa': l.glosa,
 				'partner_id': l.partner_id and l.partner_id.id or False,                                    
 				'currency_id': l.currency_id and l.currency_id.id or False,
 			}
@@ -132,8 +134,9 @@ class AccountMove(models.Model):
 			if l.target_move_id.state == 'draft':
 				l.target_move_id._post()
 
+
 	def _post(self, soft=True):
-		datos = super(AccountMove, self)._post()        
+		datos = super(AccountMove, self)._post(soft=soft)
 		for move in self:
 			move.crear_asiento_destino()
 
