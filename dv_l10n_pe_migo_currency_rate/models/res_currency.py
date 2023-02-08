@@ -40,7 +40,12 @@ class ResCurrency(models.Model):
                 'currency_id': usd_sell.id
             }
             try:
-                self.env['res.currency.rate'].create(data_sale)
+                current_rate = self.env['res.currency.rate'].search(
+                    [('name', '=', str(fields.Date.context_today(self))), ('currency_id', '=', usd_sell.id)], limit=1)
+                if current_rate:
+                    current_rate.write(data_sale)
+                else:
+                    self.env['res.currency.rate'].create(data_sale)
             except Exception as e:
                 _logger.info(e)
             
@@ -54,7 +59,12 @@ class ResCurrency(models.Model):
                 'currency_id': usd_buy.id
             }
             try:
-                self.env['res.currency.rate'].create(data_purchase)
+                current_rate = self.env['res.currency.rate'].search(
+                    [('name', '=', str(fields.Date.context_today(self))), ('currency_id', '=', usd_buy.id)], limit=1)
+                if current_rate:
+                    current_rate.write(data_purchase)
+                else:
+                    self.env['res.currency.rate'].create(data_purchase)
             except Exception as e:
                 _logger.info(e)
             

@@ -13,11 +13,9 @@ class AccountMove(models.Model):
         for record in self:
             currencies = self.env['res.currency'].search([])
             if record.move_type in ['out_invoice', 'out_refund', 'out_receipt']:
-                #currency_available_ids = currencies.search([('rate_type', '=', 'purchase')])
-                currency_available_ids = currencies.search(['|',('rate_type', '=', 'sale'),('rate_type', '=', False)])
+                currency_available_ids = currencies.search([('rate_type', '=', 'purchase')])
             elif record.move_type in ['in_invoice', 'in_refund', 'in_receipt']:
-                #currency_available_ids = self.env['res.currency'].search([('rate_type', '=', 'sale')])
-                currency_available_ids = self.env['res.currency'].search(['|',('rate_type', '=', 'sale'),('rate_type', '=', False)])
+                currency_available_ids = self.env['res.currency'].search([('rate_type', '=', 'sale')])
             else:
                 currency_available_ids = currencies
             record.currency_available_ids = currency_available_ids

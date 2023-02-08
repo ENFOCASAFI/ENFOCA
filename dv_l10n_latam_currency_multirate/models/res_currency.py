@@ -15,7 +15,7 @@ class ResCurrency(models.Model):
     rate_type = fields.Selection([
         ('purchase', 'Compra'),
         ('sale', 'Venta'),
-    ], string='Tipo de cambio', default='purchase')
+    ], string='Tipo de cambio')
 
     def name_get(self):
         res = []
@@ -25,7 +25,7 @@ class ResCurrency(models.Model):
                     rate_type = 'Venta'
                 else:
                     rate_type = 'Compra'
-                complete_name = '%s / %s ' % (currency.name, rate_type)
+                complete_name = '%s/%s ' % (currency.name, rate_type)
             else:
                 complete_name = currency.name
             res.append((currency.id, complete_name))
