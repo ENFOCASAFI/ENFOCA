@@ -11,7 +11,7 @@ class AgruparResumen(models.TransientModel):
 	def crear_resumen_cpe(self):
 		comprobantes = self.env['solse.cpe'].browse(self._context.get('active_ids', []))
 		for reg in comprobantes:
-			if reg.estado_sunat not in ['07', '09']:
+			if reg.estado_sunat not in ['01', '07', '09']:
 				continue
 			invoice_id = reg.invoice_ids[0]
 			if not invoice_id:

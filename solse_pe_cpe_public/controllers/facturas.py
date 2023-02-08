@@ -11,6 +11,7 @@ _logging = logging.getLogger(__name__)
 class WebPeCpe(http.Controller):
 	@http.route('/facturas/', type='http', auth='public', website=True)
 	def render_cpe_page(self, **kw):
+		
 		if http.request.httprequest.method == 'POST':
 			try:
 				req = http.request.httprequest.values
@@ -33,9 +34,13 @@ class WebPeCpe(http.Controller):
 							('name', 'ilike', "%s-%s" % (num[0], num[1])), ('amount_total', '=', req.get('amount_total')),
 							('company_id.partner_id.vat', '=', company_id.vat)]
 
-
+				_logging.info("==================22222222222")
+				_logging.info(query_buscar)
 				invoice = http.request.env['account.move'].sudo().search(query_buscar)
-				res = invoice and invoice.get_public_cpe() or {}
+				_logging.info(invoice)
+				res = invoice and invoice.sudo().get_public_cpe() or {}
+				_logging.info("ressssssssssssssssssssssssssss")
+				_logging.info(res)
 				return http.request.render('solse_pe_cpe_public.cpe_page_reponse', {'invoice': res})
 			except Exception:
 				return http.request.render('solse_pe_cpe_public.cpe_page_reponse', {'invoice': {'error': True}})
