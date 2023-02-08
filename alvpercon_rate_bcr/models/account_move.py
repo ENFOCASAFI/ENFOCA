@@ -13,26 +13,30 @@ class AccountMove(models.Model):
 class AccountMoveLine(models.Model):
 	_inherit = 'account.move.line'
 
-	tipo_cambio = fields.Float('Tipo de cambio', compute="_compute_tipo_cambio" , readonly=False ,store=True, digits=(12,3))
-	tipo_cambio_r = fields.Float('Tipo_cambio', related ="tipo_cambio", store=True, readonly=False)
+	tipo_cambio = fields.Float('Tipo de cambio', compute="_compute_tipo_cambio" , readonly=False ,store=True, digits=(12,3)) #ultimo cambio
+	tipo_cambio_r = fields.Float('Tipo_cambio', related ="tipo_cambio" , readonly=False , store=True)
 	debit_d = fields.Float('Débito Dolar', compute="_compute_debito_cambio" , digits=(12,2) , store=True)
 	debit_da = fields.Float('Débito_Dolar', related="debit_d" , store=True )
 	credit_d = fields.Float('Crédito Dolar', compute="_compute_credito_cambio" , digits=(12,2) , store=True)
 	credit_da = fields.Float('Crédito Dolar', related="credit_d" , store=True)
 	date_related = fields.Date("Fecha relacionada", related="move_id.invoice_date")
 	invoice_date = fields.Date("Fecha Factura", compute="_compute_invoice_date")
-	amount_currency_d = fields.Float('Importe en Dólares', compute="_compute_importe_d" , digits=(12,2) )
-	date_acc_entry = fields.Date("Fecha Asiento", related="origin_move_line_id.invoice_date") # campo instalado desde solse_target_move
-	es_x_apertrel = fields.Boolean("Movimiento por Apertura", related="move_id.es_x_apertura")
+	amount_currency_d = fields.Float('Importe en Dólares', compute="_compute_importe_d" , digits=(12,2) , store=True )
+	amount_currency_rd = fields.Float('Importe en Dólares.', related ="amount_currency_d" , digits=(12,2) , store=True )
+	date_acc_entry = fields.Date("Fecha Asiento", related="origin_move_line_id.invoice_date") # campo instalado desde solse_target_move para fecha de asiento
+	es_x_apertrel = fields.Boolean("Movimiento por Apertura", related="move_id.es_x_apertura") ##**** al activar movimiento de apertura
+	#fecha_apertura = fields.Date("Fecha relacionada", related="move_id.fecha_apertura") ##**** fecha de apertura
 	es_diario_apertd = fields.Boolean('Es diario de apertura' , related="move_id.es_diario_apert")
 	doc_rel_id = fields.Date('Fecha relacionado' , related="move_id.reversed_entry_id.invoice_date") #fecha para nota de credito
  
 	@api.depends('date_related', 'doc_rel_id','date_acc_entry')
+	#@api.depends('date_related', 'doc_rel_id','date_acc_entry','es_x_apertrel') ##**** al activar movimiento de apertura
 	def _compute_invoice_date(self):
 	#def actualiza_fecha(self):	
 	
 		for reg in self:
 			reg.invoice_date = reg.date_related
+			#if reg.fecha_apertura == False:    		  ##**** al activar movimiento de apertura
 			if reg.doc_rel_id == False:
 				if reg.invoice_date == False:
 					if reg.date_acc_entry == False:
@@ -41,8 +45,8 @@ class AccountMoveLine(models.Model):
 						reg.invoice_date = reg.date_acc_entry
 			else:
 				reg.invoice_date = reg.doc_rel_id
-
-
+			#else:										  ##**** al activar movimiento de apertura
+				#reg.invoice_date = reg.fecha_apertura    ##**** al activar movimiento de apertura
 
 	#@api.depends('currency_id', 'date', 'company_id')
 	@api.depends('invoice_date', 'es_x_apertrel','es_diario_apertd','amount_currency')
@@ -166,4 +170,3 @@ class AccountMoveLine(models.Model):
 	def _compute_importe_d(self):
 		for reg in self:
 			reg.amount_currency_d = round(reg.debit_d - reg.credit_d,2)
-			

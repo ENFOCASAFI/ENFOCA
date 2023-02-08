@@ -17,6 +17,7 @@
 		'l10n_pe_currency',
 		'account',
 		'solse_pe_accountant',
+		'solse_target_move'
 	],
 	'data': [
 		'data/ir_cron_data.xml',
