@@ -3,6 +3,7 @@ from odoo.tools import float_is_zero
 
 from itertools import chain
 
+
 class MulticurrencyRevaluationReport(models.Model):
     _inherit = 'account.accounting.report'
     _name = 'account.multicurrency.revaluation.conversion'
@@ -17,8 +18,10 @@ class MulticurrencyRevaluationReport(models.Model):
     filter_all_entries = False
     total_line = False
 
-    report_amount_currency = fields.Monetary(string='Balance in national currency')
-    report_amount_currency_current = fields.Monetary(string='Balance at current rate')
+    report_amount_currency = fields.Monetary(
+        string='Balance in national currency')
+    report_amount_currency_current = fields.Monetary(
+        string='Balance at current rate')
     report_adjustment = fields.Monetary(string='Adjustment')
     report_balance = fields.Monetary(string='Balance at operation rate')
     report_currency_id = fields.Many2one('res.currency')
@@ -42,12 +45,14 @@ class MulticurrencyRevaluationReport(models.Model):
 
     def _get_reports_buttons(self, options):
         r = super()._get_reports_buttons(options)
-        r.append({'name': _('Adjustment Entry'), 'action': 'view_revaluation_wizard'})
+        r.append({'name': _('Adjustment Entry'),
+                  'action': 'view_revaluation_wizard'})
         return r
 
     def _get_options(self, previous_options=None):
         options = super()._get_options(previous_options)
-        rates = self.env['res.currency'].search([('active', '=', True)], order='rate_type')._get_rates(self.env.company, options.get('date').get('date_to'))
+        rates = self.env['res.currency'].search([('active', '=', True)], order='rate_type')._get_rates(
+            self.env.company, options.get('date').get('date_to'))
         for key in rates.keys():  # normalize the rates to the company's currency
             rates[key] /= rates[self.env.company.currency_id.id]
         options['currency_rates'] = {
@@ -57,18 +62,21 @@ class MulticurrencyRevaluationReport(models.Model):
                 'display_name': f"{currency_id.name}/Compra" if currency_id.rate_type == 'purchase' else f"{currency_id.name}/Venta",
                 'currency_name': f"{currency_id.name}/Compra" if currency_id.rate_type == 'purchase' else f"{currency_id.name}/Venta",
                 'currency_main': self.env.company.currency_id.name,
-                #'rate': round(1 / rates[currency_id.id], 3),
+                # 'rate': round(1 / rates[currency_id.id], 3),
                 'rate': (round(1 / rates[currency_id.id], 3)
                          if not (previous_options or {}).get('currency_rates', {}).get(str(currency_id.id), {}).get('rate') else
                          float(previous_options['currency_rates'][str(currency_id.id)]['rate'])),
             } for currency_id in self.env['res.currency'].search([('active', '=', True)], order='rate_type')
         }
-        options['company_currency'] = options['currency_rates'][str(self.env.company.currency_id.id)]
-        not_usd_currencies = self.env['res.currency'].search([('active', '=', True), ('name', '!=', 'USD')], order='rate_type')
+        options['company_currency'] = options['currency_rates'][str(
+            self.env.company.currency_id.id)]
+        not_usd_currencies = self.env['res.currency'].search(
+            [('active', '=', True), ('name', '!=', 'USD')], order='rate_type')
         for cur in not_usd_currencies:
             options['currency_rates'].pop(str(cur.id))
         options['warning_multicompany'] = len(self.env.companies) > 1
-        rates = self.env['res.currency'].search([('active', '=', True)], order='rate_type')._get_rates(self.env.company, options.get('date').get('date_to'))
+        rates = self.env['res.currency'].search([('active', '=', True)], order='rate_type')._get_rates(
+            self.env.company, options.get('date').get('date_to'))
         for key in rates.keys():  # normalize the rates to the company's currency
             rates[key] /= rates[self.env.company.currency_id.id]
         options['warning_multicompany'] = len(self.env.companies) > 1
@@ -103,12 +111,7 @@ class MulticurrencyRevaluationReport(models.Model):
             (cur['currency_id'], cur['currency_name'], cur['rate_type'], cur['rate']) for cur in options['currency_rates'].values()))
         custom_currency_table = self.env.cr.mogrify(
             query, params).decode(self.env.cr.connection.encoding)
-        #WHERE (account.currency_id IS NULL OR aml.currency_id = aml.company_currency_id) AND account.currency_multirate_conversion_affected = TRUE
-        # aml.amount_currency / currency_rate.rate - aml.balance AS report_adjustment,
-        # aml.balance                                          AS report_balance,
-        # (CASE WHEN move.invoice_date IS NOT NULL THEN move.invoice_date ELSE aml.date END)
-        # CASE WHEN aml.id = part.credit_move_id THEN part.debit_currency_id ELSE part.credit_currency_id
-        #           END                                                  AS report_currency_id,
+        
         return """
             SELECT {move_line_fields},
                    aml.balance                                          AS report_amount_currency,
@@ -140,36 +143,48 @@ class MulticurrencyRevaluationReport(models.Model):
 
     def _format_all_line(self, res, value_dict, options):
         if value_dict.get('report_currency_id'):
-            report_currency_code = self.env['res.currency'].browse(value_dict.get('report_currency_id')[0])
-            res['columns'][1] = {'name': self.format_value(value_dict['report_balance'], report_currency_code)}
-            res['columns'][2] = {'name': self.format_value(value_dict['report_amount_currency_current'], report_currency_code)}
-            res['columns'][3] = {'name': self.format_value(value_dict['report_adjustment'], report_currency_code)}
+            report_currency_code = self.env['res.currency'].browse(
+                value_dict.get('report_currency_id')[0])
+            res['columns'][1] = {'name': self.format_value(
+                value_dict['report_balance'], report_currency_code)}
+            res['columns'][2] = {'name': self.format_value(
+                value_dict['report_amount_currency_current'], report_currency_code)}
+            res['columns'][3] = {'name': self.format_value(
+                value_dict['report_adjustment'], report_currency_code)}
         res['included'] = value_dict.get('report_included')
-        res['class'] = 'no_print' if not value_dict.get('report_include') else ''
+        res['class'] = 'no_print' if not value_dict.get(
+            'report_include') else ''
 
     def _format_report_currency_id_line(self, res, value_dict, options):
         res['name'] = '{for_cur} (1 {comp_cur} = {rate:.6} {for_cur})'.format(
-            for_cur=value_dict['currency_code'],
+            for_cur=options['currency_rates'][str(
+                value_dict.get('report_currency_id')[0])]['display_name'],
             comp_cur=self.env.company.currency_id.name,
-            rate=float(options['currency_rates'][str(value_dict.get('report_currency_id')[0])]['rate']),
+            rate=float(options['currency_rates'][str(
+                value_dict.get('report_currency_id')[0])]['rate']),
         )
 
     def _format_account_id_line(self, res, value_dict, options):
-        res['name'] = '%s %s' % (value_dict['account_code'], value_dict['account_name'])
+        res['name'] = '%s %s' % (
+            value_dict['account_code'], value_dict['account_name'])
 
     def _format_id_line(self, res, value_dict, options):
-        res['name'] = self._format_aml_name(value_dict['name'], value_dict['move_ref'], value_dict['move_name'])
+        res['name'] = self._format_aml_name(
+            value_dict['name'], value_dict['move_ref'], value_dict['move_name'])
         res['caret_options'] = 'account.move'
 
     def _format_report_include_line(self, res, value_dict, options):
-        res['name'] = _('Accounts to adjust') if value_dict.get('report_include') else _('Excluded Accounts')
+        res['name'] = _('Accounts to adjust') if value_dict.get(
+            'report_include') else _('Excluded Accounts')
         res['columns'] = [{}, {}, {}, {}]
 
     # ACTIONS
     def toggle_provision(self, options, params):
         """Include/exclude an account from the provision."""
-        account = self.env['account.account'].browse(int(params.get('account_id')))
-        currency = self.env['res.currency'].browse(int(params.get('currency_id')))
+        account = self.env['account.account'].browse(
+            int(params.get('account_id')))
+        currency = self.env['res.currency'].browse(
+            int(params.get('currency_id')))
         if currency in account.exclude_provision_currency_ids:
             account.exclude_provision_currency_ids -= currency
         else:
@@ -181,7 +196,8 @@ class MulticurrencyRevaluationReport(models.Model):
 
     def view_revaluation_wizard(self, context):
         """Open the revaluation wizard."""
-        form = self.env.ref('dv_account_multicurrency_revaluation_multirate_conversion.view_account_multicurrency_revaluation_conversion_wizard', False)
+        form = self.env.ref(
+            'dv_account_multicurrency_revaluation_multirate_conversion.view_account_multicurrency_revaluation_conversion_wizard', False)
         return {
             'name': _('Make Adjustment Entry'),
             'type': 'ir.actions.act_window',

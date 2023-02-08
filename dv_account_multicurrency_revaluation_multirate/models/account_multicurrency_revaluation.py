@@ -96,7 +96,7 @@ class MulticurrencyRevaluationReport(models.Model):
         if value_dict.get('report_currency_id'):
             res['columns'][0] = {'name': self.format_value(
                 value_dict['report_amount_currency'], self.env['res.currency'].browse(value_dict.get('report_currency_id')[0]))}
-        res['included'] = value_dict.get('report_included')#currency_rates
+        res['included'] = value_dict.get('report_included')
         res['class'] = 'no_print' if not value_dict.get(
             'report_include') else ''
 
