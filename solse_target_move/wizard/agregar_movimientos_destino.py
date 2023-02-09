@@ -25,3 +25,14 @@ class GenerarAsientosDestino(models.TransientModel):
 				move.crear_asiento_destino()
 			except Exception as e:
 				raise UserError("%s (%s)" % (str(e), move.name))
+		
+		return {
+			'type': 'ir.actions.client',
+			'tag': 'display_notification',
+			'params': {
+				'type': 'info',
+				'title': _('Proceso terminado exitosamente'),
+				'sticky': False,
+				'next': {'type': 'ir.actions.act_window_close'},
+			}
+		}

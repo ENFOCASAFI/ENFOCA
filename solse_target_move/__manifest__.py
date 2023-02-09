@@ -18,7 +18,7 @@
 
 	'category': 'Financial',
 	'version': '15.1.0.6',
-	'license': 'LGPL-3',
+	'license': 'Other proprietary',
 	'depends': [
 		'account',
 		'solse_pe_accountant',
