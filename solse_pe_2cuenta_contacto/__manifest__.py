@@ -15,9 +15,9 @@
 
 	'author': "F & M Solutions Service S.A.C",
 	'website': "https://www.solse.pe",
-    'license': 'LGPL-3',
 	'category': 'Financial',
-	'version': '15.1.0.0',
+	'version': '15.1.0.1',
+	'license': 'Other proprietary',
 	'depends': [
 		'account',
 		'solse_pe_edi',
