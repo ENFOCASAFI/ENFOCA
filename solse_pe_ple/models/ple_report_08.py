@@ -123,6 +123,10 @@ class PLEReport08(models.Model) :
 				amount_total = move.amount_total
 				#1-4
 				#m_01.extend([periodo.strftime('%Y%m00'), str(number), ('A'+str(number).rjust(9,'0')), invoice.invoice_date.strftime('%d/%m/%Y')])
+				#*******
+				move_id=move_id.replace('-','')
+				move_id=move_id.replace('/','')
+				#**********
 				m_01.extend([
 					move.date.strftime('%Y%m00'),
 					str(move_id),
