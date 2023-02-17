@@ -123,10 +123,6 @@ class PLEReport08(models.Model) :
 				amount_total = move.amount_total
 				#1-4
 				#m_01.extend([periodo.strftime('%Y%m00'), str(number), ('A'+str(number).rjust(9,'0')), invoice.invoice_date.strftime('%d/%m/%Y')])
-				#*******
-				move_id=move_id.replace('-','')
-				move_id=move_id.replace('/','')
-				#**********
 				m_01.extend([
 					move.date.strftime('%Y%m00'),
 					str(move_id),
@@ -204,12 +200,7 @@ class PLEReport08(models.Model) :
 				m_01.extend([format(monto_total, '.2f')])
 				#25-26 (Codigo de moneda y tipo de cambio - son opcionales)
 				tipo_cambio = format(tipo_cambio, '.3f')
-				moneda_c = 1
-				if move.currency_id.name == "USD":
-					moneda_c = 2
-				elif move.currency_id.id != move.company_id.currency_id.id:
-					moneda_c = 9
-				m_01.extend([str(moneda_c), tipo_cambio])
+				m_01.extend([str(move.currency_id.name), tipo_cambio])
 				#27-31
 				# notas credito
 				if sunat_code in ['07'] :

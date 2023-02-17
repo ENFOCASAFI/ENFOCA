@@ -5,7 +5,7 @@
 
 {
 	'name': 'PLE SUNAT - Base',
-	'version': '15.1.0.6',
+	'version': '15.1.0.9',
 	'summary': 'Base para la declaración de PLE a SUNAT',
 	'author': "F & M Solutions Service S.A.C",
 	'website': "https://www.solse.pe",
@@ -33,7 +33,7 @@
 		'views/ple_report_views.xml',
 		'views/ple_menu_view.xml',
 	],
-	'license': 'LGPL-3',
+	'license': 'Other proprietary',
 	'external_dependencies': {
 		'python': [
 			'pandas',

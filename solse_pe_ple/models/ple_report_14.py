@@ -111,10 +111,6 @@ class PLEReport14(models.Model) :
 				date_due = move.invoice_date_due
 				#1-4
 				#m_1.extend([periodo.strftime('%Y%m00'), str(number), ('A'+str(number).rjust(9,'0')), invoice.invoice_date.strftime('%d/%m/%Y')])
-				#*******
-				move_id=move_id.replace('-','')
-				move_id=move_id.replace('/','')
-				#**********
 				m_1.extend([
 					invoice_date.strftime('%Y%m00'),
 					str(move.l10n_latam_document_number),
@@ -122,15 +118,11 @@ class PLEReport14(models.Model) :
 					invoice_date.strftime('%d/%m/%Y'),
 				])
 				contador = contador + 1
-				#5
-				"""
-				1. Obligatorio, excepto cuando el campo 35 = '2'
+				#5 Obligatorio, excepto cuando el campo 35 = '2'
 				if date_due :
 					m_1.append(date_due.strftime('%d/%m/%Y'))
 				else :
 					m_1.append('')
-				"""
-				m_1.append('')
 				#6-9
 				m_1.extend([
 					sunat_code,
@@ -300,6 +292,7 @@ class PLEReport14(models.Model) :
 				'Error tipo 1: inconsistencia en el tipo de cambio',
 				'Indicador de Comprobantes de pago cancelados con medios de pago',
 				'Estado que identifica la oportunidad de la anotación o indicación',
+				'36',
 			])
 			dict_to_write.update({
 				'ple_txt_01': txt_string_01,
@@ -356,6 +349,7 @@ class PLEReport14(models.Model) :
 				'Error tipo 1: inconsistencia en el tipo de cambio',
 				'Indicador de Comprobantes de pago cancelados con medios de pago',
 				'Estado que identifica la oportunidad de la anotación o indicación',
+				'36',
 			])
 			xlsx_file = StringIO(txt_string_02)
 			df = pandas.read_csv(xlsx_file, sep='|', header=None)

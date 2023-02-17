@@ -48,6 +48,8 @@ class AccountMove(models.Model) :
 		suma = 0
 		for linea in self.invoice_line_ids:
 			impuesto_afect_ids = []
+			if not linea.tax_ids:
+				raise UserError("La factura %s no contiene impuestos en su linea %s" % (linea.move_id.name, linea.name))
 			impuesto = linea.tax_ids[0]
 			for item in linea.tipo_afectacion_compra.impuesto_afect_ids:
 				if impuesto.id == item.impuesto_id.id and item.nro_col_importe_impuesto == 15:
