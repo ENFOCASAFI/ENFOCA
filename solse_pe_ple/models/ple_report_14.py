@@ -100,7 +100,7 @@ class PLEReport14(models.Model) :
 			m_1 = []
 			try :
 				sunat_number = move.l10n_latam_document_number
-				sunat_number = sunat_number and ('-' in sunat_number) and sunat_number.split('-') or ['','']
+				#sunat_number = sunat_number and ('-' in sunat_number) and sunat_number.split('-') or ['','']
 				sunat_code = move.pe_invoice_code
 				sunat_partner_code = move.partner_id.l10n_latam_identification_type_id.l10n_pe_vat_code
 				sunat_partner_vat = move.partner_id.vat
@@ -111,9 +111,10 @@ class PLEReport14(models.Model) :
 				date_due = move.invoice_date_due
 				#1-4
 				#m_1.extend([periodo.strftime('%Y%m00'), str(number), ('A'+str(number).rjust(9,'0')), invoice.invoice_date.strftime('%d/%m/%Y')])
+				sunat_number=sunat_number.replace('-','')
 				m_1.extend([
 					invoice_date.strftime('%Y%m00'),
-					str(move.l10n_latam_document_number),
+					str(sunat_number),
 					('M'+str(1).rjust(9,'0')),
 					invoice_date.strftime('%d/%m/%Y'),
 				])
