@@ -112,12 +112,12 @@ class PLEReport14(models.Model) :
 				#1-4
 				#m_1.extend([periodo.strftime('%Y%m00'), str(number), ('A'+str(number).rjust(9,'0')), invoice.invoice_date.strftime('%d/%m/%Y')])
 				#*******
-				move_id=sunat_number.replace(',','')
-				move_id=sunat_number.replace(''','')
+				#move_id=sunat_number.replace(',','')
+				#move_id=sunat_number.replace(''','')
 				#**********
 				m_1.extend([
 					invoice_date.strftime('%Y%m00'),
-					str(move_id),
+					str(move.l10n_latam_document_number),
 					('M'+str(1).rjust(9,'0')),
 					invoice_date.strftime('%d/%m/%Y'),
 				])
