@@ -106,7 +106,7 @@ class AccountMove(models.Model) :
 			if linea.tipo_afectacion_compra.nro_col_importe_afectacion == 18:
 				monto = abs(linea.price_subtotal)
 				monto = monto * tipo_cambio
-				suma = suma + linea
+				suma = suma + monto
 
 		respuesta = ""
 		if suma > 0:
