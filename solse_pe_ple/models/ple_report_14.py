@@ -111,6 +111,10 @@ class PLEReport14(models.Model) :
 				date_due = move.invoice_date_due
 				#1-4
 				#m_1.extend([periodo.strftime('%Y%m00'), str(number), ('A'+str(number).rjust(9,'0')), invoice.invoice_date.strftime('%d/%m/%Y')])
+				#*******
+				move_id=move_id.replace('-','')
+				move_id=move_id.replace('/','')
+				#**********
 				m_1.extend([
 					invoice_date.strftime('%Y%m00'),
 					str(move.l10n_latam_document_number),
