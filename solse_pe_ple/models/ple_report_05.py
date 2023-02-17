@@ -152,10 +152,6 @@ class PLEReport05(models.Model) :
 				nro_cuenta_contable = cuenta_contable.code
 				#nro_cuenta_contable = nro_cuenta_contable.rstrip('0')
 				#1-4
-				#*******
-				move_id=move_id.replace('-','')
-				move_id=move_id.replace('/','')
-				#**********
 				m_01.extend([
 					date.strftime('%Y%m00'),
 					str(move_id),

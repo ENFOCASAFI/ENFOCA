@@ -90,10 +90,6 @@ class PLEReport06(models.Model) :
 				move_name = move_name[:200].strip()
 				date = move.date
 				#1-4
-				#*******
-				move_id=move_id.replace('-','')
-				move_id=move_id.replace('/','')
-				#**********
 				m_01.extend([
 					date.strftime('%Y%m00'),
 					str(move_id),
