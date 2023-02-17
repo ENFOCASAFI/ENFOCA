@@ -117,7 +117,7 @@ class PLEReport14(models.Model) :
 				#**********
 				m_1.extend([
 					invoice_date.strftime('%Y%m00'),
-					str(move.l10n_latam_document_number),
+					str(sunat_number),
 					('M'+str(1).rjust(9,'0')),
 					invoice_date.strftime('%d/%m/%Y'),
 				])
