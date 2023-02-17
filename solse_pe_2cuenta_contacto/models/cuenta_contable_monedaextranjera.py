@@ -20,11 +20,68 @@ class AccountMove(models.Model):
 		return self.partner_id.property_account_receivable_id
 
 	def obtener_cuenta_mextranejera_proveedor(self, contacto):
+		_logging.info("Cuenta de proveedor")
 		if self.move_type == 'in_invoice':
 			if self.currency_id.id != self.company_id.currency_id.id:
 				return self.partner_id.property_account_payable_2_id or self.partner_id.property_account_payable_id
 		
 		return self.partner_id.property_account_payable_id
+
+	@api.onchange('currency_id', 'line_ids')
+	def _onchange_adicional_id(self):
+		if not self.partner_id:
+			return
+
+		warning = {}
+		if self.partner_id:
+			rec_account = self.obtener_cuenta_mextranejera_cliente(self.partner_id)
+			pay_account = self.obtener_cuenta_mextranejera_proveedor(self.partner_id)
+			if not rec_account and not pay_account:
+				action = self.env.ref('account.action_account_config')
+				msg = _('Cannot find a chart of accounts for this company, You should configure it. \nPlease go to Account Configuration.')
+				msg = msg + " "+self.partner_id.name
+				raise RedirectWarning(msg, action.id, _('Go to the configuration panel'))
+			p = self.partner_id
+			if p.invoice_warn == 'no-message' and p.parent_id:
+				p = p.parent_id
+			if p.invoice_warn and p.invoice_warn != 'no-message':
+				# Block if partner only has warning but parent company is blocked
+				if p.invoice_warn != 'block' and p.parent_id and p.parent_id.invoice_warn == 'block':
+					p = p.parent_id
+				warning = {
+					'title': _("Warning for %s", p.name),
+					'message': p.invoice_warn_msg
+				}
+				if p.invoice_warn == 'block':
+					self.partner_id = False
+					return {'warning': warning}
+
+		if self.is_sale_document(include_receipts=True) and self.partner_id:
+			self.invoice_payment_term_id = self.partner_id.property_payment_term_id or self.invoice_payment_term_id
+			new_term_account = self.obtener_cuenta_mextranejera_cliente(self.partner_id.commercial_partner_id)
+		elif self.is_purchase_document(include_receipts=True) and self.partner_id:
+			self.invoice_payment_term_id = self.partner_id.property_supplier_payment_term_id or self.invoice_payment_term_id
+			new_term_account = self.obtener_cuenta_mextranejera_proveedor(self.partner_id.commercial_partner_id)
+		else:
+			new_term_account = None
+
+		for line in self.line_ids:
+			line.partner_id = self.partner_id.commercial_partner_id
+
+			if new_term_account and line.account_id.user_type_id.type in ('receivable', 'payable'):
+				line.account_id = new_term_account
+
+		self._compute_bank_partner_id()
+		bank_ids = self.bank_partner_id.bank_ids.filtered(lambda bank: bank.company_id is False or bank.company_id == self.company_id)
+		self.partner_bank_id = bank_ids and bank_ids[0]
+
+		# Find the new fiscal position.
+		delivery_partner_id = self._get_invoice_delivery_partner_id()
+		self.fiscal_position_id = self.env['account.fiscal.position'].get_fiscal_position(
+			self.partner_id.id, delivery_id=delivery_partner_id)
+		self._recompute_dynamic_lines()
+		if warning:
+			return {'warning': warning}
 
 	@api.onchange('partner_id')
 	def _onchange_partner_id(self):
@@ -82,8 +139,7 @@ class AccountMove(models.Model):
 			return {'warning': warning}
 
 
-	def _recompute_payment_terms_lines(self):
-		''' Compute the dynamic payment term lines of the journal entry.'''
+	"""def _recompute_payment_terms_lines(self):
 		self.ensure_one()
 		self = self.with_company(self.company_id)
 		in_draft_mode = self != self._origin
@@ -91,21 +147,12 @@ class AccountMove(models.Model):
 		self = self.with_company(self.journal_id.company_id)
 
 		def _get_payment_terms_computation_date(self):
-			''' Get the date from invoice that will be used to compute the payment terms.
-			:param self:    The current account.move record.
-			:return:        A datetime.date object.
-			'''
 			if self.invoice_payment_term_id:
 				return self.invoice_date or today
 			else:
 				return self.invoice_date_due or self.invoice_date or today
 
 		def _get_payment_terms_account(self, payment_terms_lines):
-			''' Get the account from invoice that will be set as receivable / payable account.
-			:param self:                    The current account.move record.
-			:param payment_terms_lines:     The current payment terms lines.
-			:return:                        An account.account record.
-			'''
 			if payment_terms_lines:
 				# Retrieve account from previous payment terms lines in order to allow the user to set a custom one.
 				return payment_terms_lines[0].account_id
@@ -124,13 +171,6 @@ class AccountMove(models.Model):
 				return self.env['account.account'].search(domain, limit=1)
 
 		def _compute_payment_terms(self, date, total_balance, total_amount_currency):
-			''' Compute the payment terms.
-			:param self:                    The current account.move record.
-			:param date:                    The date computed by '_get_payment_terms_computation_date'.
-			:param total_balance:           The invoice's total in company's currency.
-			:param total_amount_currency:   The invoice's total in invoice's currency.
-			:return:                        A list <to_pay_company_currency, to_pay_invoice_currency, due_date>.
-			'''
 			if self.invoice_payment_term_id:
 				to_compute = self.invoice_payment_term_id.compute(total_balance, date_ref=date, currency=self.company_id.currency_id)
 				if self.currency_id == self.company_id.currency_id:
@@ -144,13 +184,6 @@ class AccountMove(models.Model):
 				return [(fields.Date.to_string(date), total_balance, total_amount_currency)]
 
 		def _compute_diff_payment_terms_lines(self, existing_terms_lines, account, to_compute):
-			''' Process the result of the '_compute_payment_terms' method and creates/updates corresponding invoice lines.
-			:param self:                    The current account.move record.
-			:param existing_terms_lines:    The current payment terms lines.
-			:param account:                 The account.account record returned by '_get_payment_terms_account'.
-			:param to_compute:              The list returned by '_compute_payment_terms'.
-			'''
-			# As we try to update existing lines, sort them by due date.
 			existing_terms_lines = existing_terms_lines.sorted(lambda line: line.date_maturity or today)
 			existing_terms_lines_index = 0
 
@@ -212,4 +245,4 @@ class AccountMove(models.Model):
 
 		if new_terms_lines:
 			self.payment_reference = new_terms_lines[-1].name or ''
-			self.invoice_date_due = new_terms_lines[-1].date_maturity
+			self.invoice_date_due = new_terms_lines[-1].date_maturity"""

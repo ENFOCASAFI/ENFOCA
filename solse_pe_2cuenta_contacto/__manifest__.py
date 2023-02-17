@@ -16,11 +16,12 @@
 	'author': "F & M Solutions Service S.A.C",
 	'website': "https://www.solse.pe",
 	'category': 'Financial',
-	'version': '15.1.0.1',
+	'version': '15.1.0.3',
 	'license': 'Other proprietary',
 	'depends': [
 		'account',
 		'solse_pe_edi',
+		'solse_pe_accountant',
 	],
 	'data': [
 		'views/res_partner_view.xml',
