@@ -122,13 +122,20 @@ class AccountMove(models.Model):
 
 
 	def _get_l10n_latam_documents_domain(self):
+		
+		latam_document_types = self.env['l10n_latam.document.type'].search([('latam_journal_ids', 'in', [self.journal_id.id])])
+                doc_type_ids = []
+                for reg in latam_document_types:
+                    doc_type_ids.append(reg.id)
+		
 		self.ensure_one()
 		if self.move_type in ['out_refund', 'in_refund']:
 			internal_types = ['credit_note']
 		else:
 			internal_types = ['invoice', 'debit_note']
 		
-		return [('internal_type', 'in', internal_types), ('country_id', '=', self.company_id.country_id.id), ('company_id', '=', self.company_id.id)]
+		#return [('internal_type', 'in', internal_types), ('country_id', '=', self.company_id.country_id.id), ('company_id', '=', self.company_id.id)]
+		return [('id', 'in', doc_type_ids), ('internal_type', 'in', internal_types), ('country_id', '=', self.company_id.country_id.id), ('company_id', '=', self.company_id.id)]
 
 	@api.depends('journal_id', 'partner_id', 'company_id', 'move_type')
 	def _compute_l10n_latam_available_document_types(self):
