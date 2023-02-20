@@ -107,7 +107,7 @@ class AccountMoveLine(models.Model):
 				# def _compute_tipo_cambio_sistema(self):
 				#**************************************
 					# for reg in self:
-					# 	moneda_dolar = self.env["res.currency"].search([("name", "=", "USD")], limit=1)
+					# 	moneda_dolar = self.env["res.currency"].search([("name", "=", "USD"),("currency_id", "=", 2)], limit=1)
 					# 	tipo_cambio = 1.0
 					# 	if reg.currency_id.id == moneda_dolar.id:
 					# 		tipo_cambio = moneda_dolar._convert(1.0, reg.company_id.currency_id, reg.company_id, reg.invoice_date)
