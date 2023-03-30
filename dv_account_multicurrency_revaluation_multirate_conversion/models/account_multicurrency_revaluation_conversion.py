@@ -112,12 +112,14 @@ class MulticurrencyRevaluationReport(models.Model):
         custom_currency_table = self.env.cr.mogrify(
             query, params).decode(self.env.cr.connection.encoding)
         
+        #CASE WHEN aml.currency_id = aml.company_currency_id THEN balance * currency_rate.rate ELSE aml.amount_currency END AS report_balance,
+        #CASE WHEN aml.currency_id = aml.company_currency_id THEN balance * currency_rate.rate ELSE aml.amount_currency END AS report_adjustment,
         return """
             SELECT {move_line_fields},
                    aml.balance                                          AS report_amount_currency,
-                   CASE WHEN aml.currency_id = aml.company_currency_id THEN balance * currency_rate.rate ELSE aml.amount_currency END AS report_balance,
+                   aml.amount_currency_rd                               AS report_balance,
                    aml.balance / custom_currency_table.rate             AS report_amount_currency_current,
-                   aml.balance / custom_currency_table.rate - CASE WHEN aml.currency_id = aml.company_currency_id THEN balance * currency_rate.rate ELSE aml.amount_currency END AS report_adjustment,
+                   aml.balance / custom_currency_table.rate - aml.amount_currency_rd  AS report_adjustment,
                    account.multirate_conversion_currency_id             AS report_currency_id,
                    account.code                                         AS account_code,
                    account.name                                         AS account_name,
