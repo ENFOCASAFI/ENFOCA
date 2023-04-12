@@ -206,9 +206,10 @@ class MulticurrencyRevaluationReport(models.Model):
             (cur['currency_id'], cur['currency_name'], cur['rate_type'], cur['rate']) for cur in options['currency_rates'].values()))
         custom_currency_table = self.env.cr.mogrify(
             query, params).decode(self.env.cr.connection.encoding)
+        #aml.amount_currency                                 AS report_amount_currency,
         return """
             SELECT {move_line_fields},
-                   aml.amount_currency                                  AS report_amount_currency,
+                   aml.amount_currency_rd                                  AS report_amount_currency,
                    aml.balance                                          AS report_balance,
                    aml.amount_currency * custom_currency_table.rate               AS report_amount_currency_current,
                    aml.amount_currency * custom_currency_table.rate - aml.balance AS report_adjustment,
