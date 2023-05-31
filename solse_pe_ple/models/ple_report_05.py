@@ -9,6 +9,7 @@ from .ple_report import get_last_day
 from .ple_report import fill_name_data
 from .ple_report import number_to_ascii_chr
 
+import calendar
 import base64
 import datetime
 from io import StringIO, BytesIO
@@ -95,7 +96,14 @@ class PLEReport05(models.Model) :
 		fecha_inicio = datetime.date(self.year, int(self.month), 1)
 
 		date_accounts = self.env['account.account'].search([])
-		fecha = datetime.date(self.year, int(self.month), 1)
+		
+		def ultimo_numero_dia(month, year):
+    			return calendar.monthrange(year, month)
+		nromes = ultimo_numero_dia(int(self.month),self.year)[1]
+		
+		#fecha = datetime.date(self.year, int(self.month), 1)
+		fecha = datetime.date(self.year, int(self.month), int(nromes))
+		
 		for date_account in date_accounts :
 			m_03 = []
 			m_04 = []
@@ -103,7 +111,8 @@ class PLEReport05(models.Model) :
 				#1-3
 				nro_cuenta_contable = date_account.code
 				m_03.extend([
-					fecha.strftime('%Y%m00'),
+					#fecha.strftime('%Y%m00'),
+					fecha.strftime('%Y%m%d'),
 					nro_cuenta_contable,
 					date_account.name,
 				])
@@ -191,9 +200,13 @@ class PLEReport05(models.Model) :
 					purchase_number = purchase_number and ('-' in purchase_number) and purchase_number.split('-') or ['','']
 					m_01.extend(purchase_number)
 				else:
-					m_01.extend(['', str(move_id)])
+					#m_01.extend(['', str(move_id)])
+					m_01.extend(['', '0'])
 				#13-14
 				m_01.extend([date.strftime('%d/%m/%Y'), ''])
+				#m_01.extend([date.strftime('%d/%m/%Y')])
+				#datef = move.date_maturity
+				#m_01.extend([datef.strftime('%d/%m/%Y')])
 				#15
 				if factura.move_type in ['entry', 'out_receipt', 'in_receipt']:
 					m_01.append(date.strftime('%d/%m/%Y'))
@@ -201,14 +214,29 @@ class PLEReport05(models.Model) :
 					m_01.append(factura.invoice_date.strftime('%d/%m/%Y'))
 				#16-17
 				glosa = move_name
+				#glosa = move.glosa
+				#if glosa :
+					#glosa = glosa.replace('\r', ' ').replace('\n', ' ').split()
+					#glosa = ' '.join(glosa)
 				if factura.glosa:
 					glosa = factura.glosa[:200].strip()
 				m_01.extend([
 					glosa,
 					'',
 				])
-				#18-20
-				m_01.extend([format(move.debit, '.2f'), format(move.credit, '.2f'), ''])
+				#18-19
+				#m_01.extend([format(move.debit, '.2f'), format(move.credit, '.2f'), ''])
+				m_01.extend([format(move.debit, '.2f'), format(move.credit, '.2f')])
+				#20
+				if factura.move_type in ['out_invoice', 'out_refund']:					
+					codlibro= '1401'+'&'+date.strftime('%Y%m00')+'&'+str(move_id)+'&'+('M'+str(contador).rjust(9,'0'))
+					m_01.extend([codlibro])
+				elif factura.move_type in ['in_invoice', 'in_refund']:
+					codlibro= '0801'+'&'+date.strftime('%Y%m00')+'&'+str(move_id)+'&'+('M'+str(contador).rjust(9,'0'))
+					m_01.extend([codlibro])
+				else:
+					m_01.extend([''])				
+					
 				#21
 				estado = '1'
 				if factura.move_type in ['entry', 'out_receipt', 'in_receipt']:
@@ -216,7 +244,53 @@ class PLEReport05(models.Model) :
 				elif factura.invoice_date < fecha_inicio:
 					estado = '8'
 				m_01.extend([estado])
-
+				
+				# ****** campos adicionales *****
+				# columna 22 		
+				if nro_cuenta_contable[0:3] == '104' and factura.journal_id.type in ['bank']:
+					#m_01.extend([nro_cuenta_contable[0:3]])
+					codbanco = factura.journal_id.bank_id.l10n_pe_bank_code
+					m_01.extend([str(codbanco)])					
+				else:
+				    	m_01.extend(['00'])
+				# columna 23
+				if nro_cuenta_contable[0:3] == '104' and factura.journal_id.type in ['bank']:
+					#m_01.extend(['x23'])
+					cuentabanco = factura.journal_id.bank_account_id.acc_number
+					m_01.extend([cuentabanco])
+				else:
+				    	m_01.extend(['000'])
+				# columna 24
+				if nro_cuenta_contable[0:3] == '104' and factura.journal_id.type in ['bank']:
+					m_01.extend(['003'])
+				else:
+				    	m_01.extend(['000'])
+				# columna 25
+				glosa = move_name
+				if nro_cuenta_contable[0:3] == '104' and factura.journal_id.type in ['bank']:
+					if factura.glosa:
+						glosa = factura.glosa[:200].strip()
+					m_01.extend([
+						glosa
+					])
+				else:
+				    	m_01.extend(['0'])				
+				# columna 26
+				partner_name = factura.partner_id.name
+				if nro_cuenta_contable[0:3] == '104' and factura.journal_id.type in ['bank']:
+					if partner_name:
+						m_01.extend([partner_name])
+					else:
+						m_01.extend(['xxxx'])
+				else:
+				    	m_01.extend([''])
+				# columna 27
+				if nro_cuenta_contable[0:3] == '104' and factura.journal_id.type in ['bank']:
+					m_01.extend([str(move_id)])
+				else:
+				    	m_01.extend(['0'])
+				#***********************************
+				
 				if self.eximido_presentar_caja_bancos == True:
 					campos_faltantes = ['', '', '', '', '','','']
 				else:
@@ -337,6 +411,12 @@ class PLEReport05(models.Model) :
 				'Movimientos del Haber',
 				'Código del libro, campo 1, campo 2 y campo 3 del Registro de Ventas e Ingresos o del Registro de Compras',
 				'Indica el estado de la operación',
+				'Código de la entidad financiera donde se encuentra su cuenta bancaria (Tabla 3)',
+				'Código de la cuenta bancaria del contribuyente',
+				'Medio de pago utilizado(Tabla 1)',
+				'Descripción de la operación bancaria',
+				'Apellidos y nombres, Denominación o Razón Social del girador o beneficiario',
+				'Número de transacción bancaria, número de documento sustentatorio o número de control interno de la operación bancaria',
 			]
 			if self.eximido_presentar_caja_bancos == True:
 				headers.append('#22')

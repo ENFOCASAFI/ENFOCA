@@ -266,7 +266,91 @@ class PLEReport08(models.Model) :
 			m_02 = []
 			if m_01 and (move.partner_id.country_id != peru):
 				_logging.info('recorre no domiciliado')
-
+				#1-6 LE 8.2
+				m_02.extend(m_01[0:4])
+				m_02.append(m_01[5])
+				m_02.extend([''])
+				#7 LE 8.2
+				#m_02.append(m_01[6])
+				sunat_numberx = move.ref
+				m_02.extend([sunat_numberx])
+				#8 LE 8.2
+				#m_02.append(m_01[13])
+				monto_totalus = abs(move.amount_untaxed_signed)
+				m_02.extend(([format(monto_totalus, '.2f')]))
+				#9 LE 8.2
+				#m_02.append(m_01[14])
+				#monto_igv = float(m_01[23]) - abs(move.amount_untaxed_signed)
+				#m_02.extend(([format(monto_igv, '.0f')]))
+				m_02.extend(['0.0'])
+				#10 LE 8.2				
+				#m_02.append(m_01[23])
+				m_02.extend(([format(monto_totalus, '.2f')]))
+				#11 LE 8.2
+				#m_02.extend(['11x'])
+				tds = move.nro_doc_id.pe_invoice_code
+				m_02.extend([tds])
+				#12 LE 8.2
+				#m_02.extend(['12x'])
+				ndnd = move.nro_doc_id.ref
+				ndnd = ndnd and ('-' in ndnd) and ndnd.split('-') or ['', '']
+				#m_02.extend([str(ndnd[0][2:6])])
+				m_02.extend([str(ndnd[0])])
+				#13 LE 8.2
+				#m_02.extend([''])
+				aniodua = move.anio_dua
+				if aniodua:
+					m_02.extend([str(aniodua)])
+				else:
+					m_02.extend([''])
+				#14 LE 8.2
+				#m_02.extend(['14x'])
+				m_02.extend([str(ndnd[1])])
+				#15-17 LE 8.2
+				monto_total = abs(move.amount_untaxed_signed)*0.18
+				#m_02.extend(['15x'])
+				m_02.extend(([format(monto_total, '.2f')]))
+				m_02.extend([
+					m_01[24],
+					m_01[25],
+				])
+				# columnas 18-19 para el libro 0802
+				m_02.extend(['9249'])
+				
+				m_02.extend([
+					m_01[12],
+				])
+				# columnas 20 para el libro 0802
+				m_02.extend([''])
+				# columnas 21 para el libro 0802
+				m_02.extend([
+					m_01[11],
+				])
+				# columnas 22 para el libro 0802
+				m_02.extend([''])
+				# columnas 23 para el libro 0802
+				m_02.extend([
+					m_01[12],
+				])
+				# columnas 24 para el libro 0802
+				m_02.extend([''])
+				# columnas 25 para el libro 0802
+				m_02.extend(['00'])
+				# columnas 26 para el libro 0802
+				m_02.extend([''])
+				# columnas 27-33 para el libro 0802
+				m_02.extend(['', '', '', '', '00', '', '00'])
+				# columna 34 para el libro 0802
+				msp = move.tipotrab_doc_nodoc_id.codigo
+				m_02.extend([str(msp)])
+				# columnas 35-36 para el libro 0802
+				#m_02.extend(['', '0'])
+				#m_02.extend(m_01[40:])
+				codigo = '0'
+				if invoice_date < fecha_inicio:
+					codigo = '9'
+				m_02.extend(['',codigo, ''])
+				
 			if m_02 :
 				lines_to_write_02.append('|'.join(m_02))
 
@@ -362,22 +446,67 @@ class PLEReport08(models.Model) :
 		lines_to_write_02.append('')
 		txt_string_02 = '\r\n'.join(lines_to_write_02)
 		if txt_string_02:
+			xlsx_file_base_64 = self._generate_xlsx_base64_bytes(txt_string_02, name_02[2:], headers=[
+				'Periodo',
+				'Número correlativo del mes o Código Único de la Operación (CUO)',
+				'Número correlativo del asiento contable',
+				'Información de comprobante de pago sujeto no domiciliado Fecha de emisión',
+				'Información de comprobante de pago sujeto no domiciliado Tipo de CDP',
+				'Información de comprobante de pago sujeto no domiciliado Serie del CDP',
+				'Información de comprobante de pago sujeto no domiciliado Número del CDP',
+				'Información de comprobante de pago sujeto no domiciliado Base Imponible',
+				'Información de comprobante de pago sujeto no domiciliado Otros Trbutos',
+				'Información de comprobante de pago sujeto no domiciliado Total',
+				'Documento de sustento credito fiscal Tipo de CDP',
+				'Documento de sustento credito fiscal Serie del CDP',
+				'Documento de sustento credito fiscal Año de la DUA',
+				'Documento de sustento credito fiscal Número de CDP',
+				'Monto de retención del IGV',
+				'Moneda Codigo de la moneda',
+				'Moneda tipo de cambio',
+				'Pais de la residencia del sujeto no domicilado',
+				'Proveedor Razon Social',
+				'Proveedor domicilio en le extranjero del sujeto no domiciliado',
+				'Proveedor Número de identificación del sujeto no domiciliado',
+				'Proveedor Número de identificación fiscal del beneficiario efectivo de los pagos',
+				'Proveedor Apellidos y nombres, denominación o razón social  del beneficiario efectivo de los pagos',
+				'Proveedor Pais de la residencia del beneficiario efectivo de los pagos',
+				'Proveedor Vínculo entre el contribuyente y el residente en el extranjero (Tabla 27)',
+				'Impuesto a la renta Renta Bruta',
+				'Impuesto a la renta Deducción / Costo de Enajenación de bienes de capital',
+				'Impuesto a la renta Renta Neta',
+				'Impuesto a la renta Tasa de retención',
+				'Impuesto a la renta Impuesto Retenido',
+				'Impuesto a la renta Convenios para evitar la doble imposición (Tabla 25)',
+				'Impuesto a la renta Exoneración aplicada (Tabla 33)',
+				'Tipo de renta (Tabla 31)',
+				'Modalidad del servicio prestado por el no domiciliado  (Tabla 32)',
+				'Aplicación del penultimo parrafo del Art. 76° de la Ley del Impuesto a la Renta',
+				'Estado de Anotación',
+			])
 			dict_to_write.update({
 				'ple_txt_02': txt_string_02,
 				'ple_txt_02_binary': base64.b64encode(txt_string_02.encode()),
 				'ple_txt_02_filename': name_02 + '.txt',
-				'ple_xls_02_binary': False,
-				'ple_xls_02_filename': False,
+				'ple_xls_02_binary': xlsx_file_base_64.encode(),
+				'ple_xls_02_filename': name_02 + '.xlsx',
 			})
 		else:
-			txt_string_02 = " "
+			#txt_string_02 = "Prueba"
 			dict_to_write.update({
-				'ple_txt_02': txt_string_02,
-				'ple_txt_02_binary': base64.b64encode(txt_string_02.encode()),
-				'ple_txt_02_filename': name_02 + '.txt',
+				'ple_txt_02': False,
+				'ple_txt_02_binary': False,
+				'ple_txt_02_filename': False,
 				'ple_xls_02_binary': False,
 				'ple_xls_02_filename': False,
 			})
+			#dict_to_write.update({
+				#'ple_txt_02': txt_string_02,
+				#'ple_txt_02_binary': base64.b64encode(txt_string_02.encode()),
+				#'ple_txt_02_filename': name_02 + '.txt',
+				#'ple_xls_02_binary': False,
+				#'ple_xls_02_filename': False,
+			#})
 
 		name_03 = self.get_default_filename(ple_id='080300', tiene_datos=bool(lines_to_write_03))
 		lines_to_write_03.append('')
