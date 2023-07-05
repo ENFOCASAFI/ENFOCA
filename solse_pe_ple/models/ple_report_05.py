@@ -213,13 +213,15 @@ class PLEReport05(models.Model) :
 				else:
 					m_01.append(factura.invoice_date.strftime('%d/%m/%Y'))
 				#16-17
-				glosa = move_name
+				#glosa = move_name
 				#glosa = move.glosa
+				glosas = move.glosa
+				glosa = str(glosas)
 				#if glosa :
 					#glosa = glosa.replace('\r', ' ').replace('\n', ' ').split()
 					#glosa = ' '.join(glosa)
-				if factura.glosa:
-					glosa = factura.glosa[:200].strip()
+				#if factura.glosa:
+					#glosa = factura.glosa[:200].strip()
 				m_01.extend([
 					glosa,
 					'',
