@@ -244,7 +244,7 @@ class PLEReport05(models.Model) :
 				if factura.move_type in ['entry', 'out_receipt', 'in_receipt']:
 					estado = '1'
 				elif factura.invoice_date < fecha_inicio:
-					estado = '8'
+					estado = '1'
 				m_01.extend([estado])
 				
 				# ****** campos adicionales *****
