@@ -8,13 +8,13 @@ class AccountMove(models.Model):
 	_inherit = 'account.move'
 
 	bank_statement_ref = fields.Char(string='Reference bank', related="statement_line_id.payment_ref", store=True)
-	glosa = fields.Char(string="Glosa")
+	#glosa = fields.Char(string="Glosa")
 	
 	# se ejecuta cuando se agtega un nuevo registro en la tabla o modelo account.move
 	# @api.model
 	# def create(self, values) :
 	# 	res = super().create(values)
-	# 	query ="UPDATE account_move set glosa = bank_statement_ref  where bank_statement_ref IS NOT NULL "
+	# 	query ="UPDATE account_move set glosa = bank_statement_ref where bank_statement_ref IS NOT NULL "
 	# 	self.env.cr.execute(query)
 	# 	return res
 	
@@ -25,7 +25,19 @@ class AccountMove(models.Model):
 		self.env.cr.execute(query)
 		return res	
 	
-	
+class AccountMoveLine(models.Model):
+	_inherit = 'account.move.line'
+
+	def write(self, values) :
+		res = super().write(values)
+		query ="UPDATE account_move_line set glosa = name where parent_state = 'draft' and glosa IS NULL "
+		self.env.cr.execute(query)
+		return res
+
+
+	#from account_move_line where parent_state = 'draft' and glosa IS NULL
+
+
 	def updete_glosa(self) :
 		pass
 		# query ="UPDATE account_move set glosa = bank_statement_ref  where bank_statement_ref IS NOT NULL "

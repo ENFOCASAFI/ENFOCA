@@ -13,7 +13,7 @@
             
 			<xpath expr="//div[@name='journal_div']" position="after">
             	<field name="bank_statement_ref" invisible ="1"/>
-                <field name="glosa" />
+                <!-- <field name="glosa" /> -->
 			 
 			</xpath>	        
 			
