@@ -231,10 +231,12 @@ class PLEReport05(models.Model) :
 				m_01.extend([format(move.debit, '.2f'), format(move.credit, '.2f')])
 				#20
 				if factura.move_type in ['out_invoice', 'out_refund']:					
-					codlibro= '140100'+'&'+date.strftime('%Y%m00')+'&'+str(move_id)+'&'+('M'+str(contador).rjust(9,'0'))
+					#codlibro= '140100'+'&'+date.strftime('%Y%m00')+'&'+str(move_id)+'&'+('M'+str(contador).rjust(9,'0'))
+					codlibro= '140100'+'&'+date.strftime('%Y%m00')+'&'+str(move_id)+'&'+'M000000001'
 					m_01.extend([codlibro])
 				elif factura.move_type in ['in_invoice', 'in_refund']:
-					codlibro= '080100'+'&'+date.strftime('%Y%m00')+'&'+str(move_id)+'&'+('M'+str(contador).rjust(9,'0'))
+					#codlibro= '080100'+'&'+date.strftime('%Y%m00')+'&'+str(move_id)+'&'+('M'+str(contador).rjust(9,'0'))
+					codlibro= '080100'+'&'+date.strftime('%Y%m00')+'&'+str(move_id)+'&'+'M000000001'
 					m_01.extend([codlibro])
 				else:
 					m_01.extend([''])				
