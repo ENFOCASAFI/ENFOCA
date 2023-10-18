@@ -136,24 +136,58 @@ class PLEReport14(models.Model) :
 					sunat_number[1],
 					'',
 				])
-				#10-13
+				#*******************************
+				#10-12
 				if sunat_partner_code and sunat_partner_vat and sunat_partner_name :
 					m_1.extend([
 						sunat_partner_code,
 						sunat_partner_vat,
-						sunat_partner_name,
-						'',
+						sunat_partner_name,						
 					])
 				else :
-					m_1.extend(['', '', '', ''])
-				#14-18
+					m_1.extend(['', '', ''])
+				#13-19
 				total_sin_impuestos = abs(move.amount_untaxed_signed)
+				if sunat_code in ['07']:
+					total_sin_impuestos = -total_sin_impuestos
 				total_impuestos = abs(move.amount_tax_signed)
-				m_1.extend([format(total_sin_impuestos, '.2f'), '', format(total_impuestos, '.2f'), '', ''])
-				#19-24
-				m_1.extend(['', '', '', '', '0.00', '']) #ICBP
+				#*********************
+				if sunat_code in ['07']:
+					total_impuestos = -total_impuestos
+				total_montoafecto = abs(move.amount_tax_signed)/0.18
+				if sunat_code in ['07']:
+					total_montoafecto = -total_montoafecto
+				#m_1.extend([format(total_montoafecto, '.2f')])					
+				total_inafecto = abs(move.amount_untaxed_signed)-abs(move.amount_tax_signed)/0.18
+				if sunat_code in ['07']:
+					total_inafecto = -total_inafecto
+				#m_1.extend([format(total_inafecto, '.2f')])
+
+				campos_impuestos = move.tax_totals_json
+				tax_jason = str(campos_impuestos)
+				conceptoa = 'INA'
+				conceptob = 'EXO'
+				conceptoc = 'EXP'
+				inafecto = 'IGV'
+				if conceptoa in tax_jason:
+					#inafecto = conceptoa
+					m_1.extend(['',format(total_montoafecto, '.2f'), '', format(total_impuestos, '.2f'), '', '', format(total_inafecto, '.2f')])
+				elif conceptob in tax_jason:
+					#inafecto = conceptob
+					m_1.extend(['',format(total_montoafecto, '.2f'), '', format(total_impuestos, '.2f'), '', format(total_inafecto, '.2f'), ''])
+				elif conceptoc in tax_jason:
+					#inafecto = conceptoc
+					m_1.extend([format(total_inafecto, '.2f'),format(total_montoafecto, '.2f'), '', format(total_impuestos, '.2f'), '', '', ''])
+				else:
+					m_1.extend(['',format(total_sin_impuestos, '.2f'), '', format(total_impuestos, '.2f'), '', '', ''])
+								
+				#m_1.extend(['',format(total_sin_impuestos, '.2f'), '', format(total_impuestos, '.2f'), '', '', ''])
+				
+				#************************************************
+				#20-24
+				m_1.extend(['', '', '', '0.00', '']) #ICBP
 				#25-27
-				monto_total = abs(move.amount_total_signed)
+				monto_total = abs(move.amount_total_signed)								
 				#m_1.extend([format(move.amount_total, '.2f'), '', ''])
 				fecha_busqueda = str(invoice_date)
 				currency_rate_id = [
@@ -167,8 +201,10 @@ class PLEReport14(models.Model) :
 					tipo_cambio = currency_rate_id.rate_pe
 
 				tipo_cambio = format(tipo_cambio, '.3f')
-				
-				m_1.extend([format(monto_total, '.2f'), move.currency_id.name, tipo_cambio])
+				if sunat_code in ['07']:
+					m_1.extend([format(-monto_total, '.2f'), move.currency_id.name, tipo_cambio])
+				else:
+					m_1.extend([format(monto_total, '.2f'), move.currency_id.name, tipo_cambio])
 				#28-31
 				# notas credito
 				if sunat_code in ['07'] :
@@ -191,6 +227,37 @@ class PLEReport14(models.Model) :
 				if move.state in ["annul", "cancel"]:
 					estado_comprobante = '2'
 				m_1.extend(['', '', '', estado_comprobante, ''])
+				
+				#Adcionales
+				#*********************
+				total_montoafecto = abs(move.amount_tax_signed)/0.18
+				if sunat_code in ['07']:
+					total_montoafecto = -total_montoafecto
+				m_1.extend([format(total_montoafecto, '.2f')])
+				#if sunat_code in ['07']:
+					#m_1.extend([format(-total_montoafecto, '.2f')])
+				#else:
+					#m_1.extend([format(total_montoafecto, '.2f')])
+					
+				#total_inafecto = abs(move.amount_untaxed_signed)-abs(move.amount_tax_signed)/0.18				
+				#m_1.extend([format(total_inafecto, '.2f')])
+
+				#campos_impuestos = move.tax_totals_json
+				#tax_jason = str(campos_impuestos)
+				#conceptoa = 'INA'
+				#conceptob = 'EXO'
+				#conceptoc = 'EXP'
+				#inafecto = 'IGV'
+				#if conceptoa in tax_jason:
+					#inafecto = conceptoa					
+				#if conceptob in tax_jason:
+					#inafecto = conceptob
+				#if conceptoc in tax_jason:
+					#inafecto = conceptoc
+				#m_1.extend([inafecto])
+				#m_1.extend([tax_jason])
+
+				
 			except Exception as e:
 				raise UserError(e)
 				m_1 = []
