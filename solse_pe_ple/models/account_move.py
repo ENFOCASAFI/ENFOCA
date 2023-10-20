@@ -139,7 +139,8 @@ class AccountMove(models.Model) :
 		suma = 0
 		for linea in self.invoice_line_ids:
 			if linea.tipo_afectacion_compra.nro_col_importe_afectacion == 20:
-				monto = abs(linea.price_subtotal)
+				#monto = abs(linea.price_subtotal)
+				monto = linea.price_subtotal
 				monto = monto * tipo_cambio
 				suma = suma + monto
 
@@ -147,7 +148,8 @@ class AccountMove(models.Model) :
 		if suma > 0:
 			respuesta = format(suma, '.2f')
 		else:
-			respuesta = ""
+			#respuesta = ""
+			respuesta = format(suma, '.2f')
 
 		return respuesta
 
