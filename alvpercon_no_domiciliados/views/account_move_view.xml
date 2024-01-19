@@ -8,7 +8,8 @@
 		<field name="arch" type="xml">
 			<xpath expr="//field[@name='l10n_latam_document_type_id']" position="after">
                 <!-- <field name="pe_invoice_code" attrs="{'invisible':1}" /> -->
-            	<field name="nro_doc_id" attrs="{'invisible': [('pe_invoice_code', 'not in', ('91'))], 'required':[('pe_invoice_code','in',['91'])]  }" />                
+		<field name="nro_doc_id" attrs="{'invisible': [('pe_invoice_code', 'not in', ('91'))] }" />
+		<!-- <field name="nro_doc_id" attrs="{'invisible': [('pe_invoice_code', 'not in', ('91'))], 'required':[('pe_invoice_code','in',['91'])]  }" /> -->           	               
                 <!-- <field name="tipotrab_doc_nodoc" attrs="{'invisible': [('pe_invoice_code', 'not in', ('91'))], 'required':[('pe_invoice_code','in',['91'])]}" /> -->
 				<field name="tipotrab_doc_nodoc_id" attrs="{'invisible': [('pe_invoice_code', 'not in', ('91'))], 'required':[('pe_invoice_code','in',['91'])]}" />
                 <field name="doc_relac_nodomic" invisible = "1" />
