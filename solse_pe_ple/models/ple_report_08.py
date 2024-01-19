@@ -289,7 +289,11 @@ class PLEReport08(models.Model) :
 				#11 LE 8.2
 				#m_02.extend(['11x'])
 				tds = move.nro_doc_id.pe_invoice_code
-				m_02.extend([tds])
+				if tds:
+					m_02.extend([tds])
+				else:
+					m_02.extend([''])
+				#m_02.extend([tds])
 				#12 LE 8.2
 				#m_02.extend(['12x'])
 				ndnd = move.nro_doc_id.ref
