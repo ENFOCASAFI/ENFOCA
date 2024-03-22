@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+balance_date_report,balance.date.report,model_balance_date_report,,1,1,1,1
+balance_record_group,balance.record.group,model_balance_record_group,,1,1,1,1
+balance_record_group_periodo,balance.record.group.periodo,model_balance_record_group_periodo,,1,1,1,1
+balance_record_group_dolar,balance.record.group.dolar,model_balance_record_group_dolar,,1,1,1,1
+
