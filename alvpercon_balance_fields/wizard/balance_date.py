@@ -165,7 +165,7 @@ class BalanceDate(models.TransientModel):
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Reporte Balance de Comprobación Dólares',
+            'name': 'Reporte Balance de Comprobación USD',
             'res_model': 'balance.record.group.dolar',
             'view_type': 'form',
             'view_id': False,
