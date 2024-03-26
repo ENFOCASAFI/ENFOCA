@@ -64,7 +64,7 @@ class BalanceDate(models.TransientModel):
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Reporte Balance',
+            'name': 'Reporte Balance Soles',
             'res_model': 'balance.record.group',
             'view_type': 'form',
             'view_id': False,
@@ -163,16 +163,16 @@ class BalanceDate(models.TransientModel):
             query2 ="UPDATE account_move_line SET account_for_balance = 0 WHERE account_saldo_ini = 'a'; "        
             self.env.cr.execute(query2)
 
-        # return {
-        #     'type': 'ir.actions.act_window',
-        #     'name': 'Reporte Balance',
-        #     'res_model': 'balance.record.group.dolar',
-        #     'view_type': 'form',
-        #     'view_id': False,
-        #     'view_mode': 'tree,form,pivot',
-        #     'context': {'search_default_grupo_de_cuentas': 1,},
-        #     'target': 'current',
-        # }
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Reporte Balance Dólares',
+            'res_model': 'balance.record.group.dolar',
+            'view_type': 'form',
+            'view_id': False,
+            'view_mode': 'tree,form,pivot',
+            'context': {'search_default_grupo_de_cuentas': 1,},
+            'target': 'current',
+        }
 
 
         #journal_id not in (107,108,109)

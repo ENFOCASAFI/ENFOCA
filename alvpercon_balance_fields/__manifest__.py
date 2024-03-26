@@ -14,7 +14,7 @@
 		'views/balance_record_group.xml',
 		'views/balance_record_group_periodo.xml',
 		'views/balance_record_group_dolar.xml',
-		# 'views/balance_record_group.dolar.xml',
+		'views/balance_record_group_dolar.xml',
 	],
 	'installable': True,
 	'sequence': 1,
