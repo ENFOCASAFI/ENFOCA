@@ -64,7 +64,7 @@ class BalanceDate(models.TransientModel):
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Reporte Balance Soles',
+            'name': 'Reporte Balance de Comprobación Soles',
             'res_model': 'balance.record.group',
             'view_type': 'form',
             'view_id': False,
@@ -165,7 +165,7 @@ class BalanceDate(models.TransientModel):
 
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Reporte Balance Dólares',
+            'name': 'Reporte Balance de Comprobación Dólares',
             'res_model': 'balance.record.group.dolar',
             'view_type': 'form',
             'view_id': False,
