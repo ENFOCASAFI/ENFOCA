@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Creación de Ventana Emergente de Remesa" /> -->
+     
+    <record id="view_date_report_wizard_balance" model="ir.ui.view">
+        <field name="name">Fecha de Balance</field>
+        <field name="model">balance.date.report</field>
+        <field name="arch" type="xml">
+            <form string="Fechas de balance">
+                <p class="oe_grey">
+                    Genera Reporte de Balance
+                </p>
+                <group>
+                    <group string="Periodos">
+                        <field name="is_mensual" />
+                        <!-- <field name="is_acumulado" /> -->
+                        <field name="is_saldo_ini" />
+                                             
+                    </group>
+                    <group string="Filtro de Diarios">
+                         <field name="journalb_ids" widget="many2many_tags" attrs="{'invisible': [('is_saldo_ini', '=', False)]}" /> 
+                        <!-- <field name="is_mensual_comp" /> -->
+                        <!-- <field name="is_acumulado_comp" />                     -->
+                    </group>
+                </group>
+                <group>
+                    <group>
+                        <field name="fecha_ini" attrs="{'invisible': [('is_mensual', '=', False)]}"/>
+                        <field name="fecha_fin" attrs="{'invisible': [('is_mensual', '=', False)]}"/>
+                        <!-- <field name="fecha_fin_acum" attrs="{'invisible': [('is_acumulado', '=', False),('is_acumulado_comp', '=', False)]}"/>  -->
+                        
+                        <!-- <field name="fecha_ini" attrs="{'invisible': [('is_mensual', '=', False),('is_mensual_comp', '=', False)]}"/>
+                        <field name="fecha_fin" attrs="{'invisible': [('is_mensual', '=', False),('is_mensual_comp', '=', False)]}"/> -->
+                        <!-- <field name="fecha_fin_acum" attrs="{'invisible': [('is_acumulado', '=', False),('is_acumulado_comp', '=', False)]}"/>  -->
+                    </group>
+                   
+                </group>
+                
+                <footer>
+                    <button
+                            name="print_report"
+                            string="Soles"                            
+                            type="object" class="btn-primary" />
+                            <!-- type="object" class="btn-primary"  attrs="{'invisible': [('is_mensual_comp', '=', True)]}" -->
+
+                    <!-- <button
+                            name="print_report_periodo"
+                            string="Soles."
+                            type="object" class="btn-primary"/> -->
+                             <!-- attrs="{'invisible': [('is_mensual_comp', '=', False)]}" -->
+
+                    <button
+                            name="print_report_dolares"
+                            string="Dólares"
+                            type="object" class="btn-primary" />
+
+                    <button
+                            string="Cancel"
+                            class="btn-secondary"
+                            special="cancel" />
+                </footer>
+            </form>        
+        </field>
+    </record>
+    
+    <!-- Accion de la ventana emergente de la remesa" /> -->
+
+    <record id="action_view_report_balance" model="ir.actions.act_window">
+        <field name="name">Formulario reporte Balance</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">balance.date.report</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>        
+    </record>
+
+
+
+    <!-- Menu de remesa parent="account.menu_finance_receivables" ==> id externo del menu donde se instalara el menú -->
+     <!-- http://www.erpish.com/odoo/how-to-add-a-menu-submenu-within-an-existing-module-in-odoo/ -->
+   
+    
+    <menuitem
+                id="wizard_balance_report_menu"
+                name="Fecha de balance"                
+                parent="account_reports.account_reports_audit_reports_menu"   
+                sequence="30"              
+                action="action_view_report_balance"
+                />
+    
+
+    <!-- groups="account.group_account_manager" -->
+    <!-- parent="account.menu_finance_receivables"  -->
+
+</odoo>

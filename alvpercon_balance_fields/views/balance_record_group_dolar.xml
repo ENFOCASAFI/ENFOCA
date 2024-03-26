@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_balance_report_dolar_tree" model="ir.ui.view">
+        <field name="name">view.balance.report.dolar.tree</field>
+        <field name="model">balance.record.group.dolar</field>
+        <field name="arch" type="xml">
+            <tree sample="1">
+                <field name="account"/>
+				<field name="name"/>
+                <!-- <field name="mes"/>
+                <field name="ano"/>
+				<field name="account_type"/>
+				<field name="account_digit"/>
+                <field name="account_digitd"/> -->
+                <field name="debit_amount" sum="Total Debit"/>   
+				<field name="credit_amount" sum="Total Credit"/>				             
+				<field name="deudor" sum="Total deudor"/>
+				<field name="acreedor" sum="Total acreedor"/>
+				<field name="activo" sum="Total activo"/>
+				<field name="pasivo" sum="Total pasivo"/>
+                <field name="perdida" sum="Total perdida"/>
+                <field name="ganancia" sum="Total ganancia"/>
+                <field name="perdidan" sum="Total perdidan"/>
+                <field name="ganancian" sum="Total ganancian"/>
+                <!-- <field name="journal_id" sum="Total journal_id"/> -->
+            </tree>
+        </field>
+    </record>
+
+            <record id="view_record_balance_dolar_pivot" model="ir.ui.view">
+            <field name="name">view.record.balance.dolar.pivot</field>
+            <field name="model">balance.record.group.dolar</field>
+            <field name="arch" type="xml">
+                <pivot string="Analisis de balance" sample="1">
+                    <field name="account" type="row"/>
+                    <field name="name" type="row"/>
+                    <!-- <field name="ano" interval="month" type="col"/> -->
+                    <!-- <field name="mes" interval="month" type="col"/>
+                    <field name="mesl" interval="month" type="col"/> -->
+                    <field name="activo" type="measure"/>
+                    <field name="pasivo" type="measure"/>
+                    <!-- <field name="price_total" type="measure"/> -->
+                </pivot>
+            </field>
+        </record>
+
+    <record id="view_record_balance_dolarsearch" model="ir.ui.view">
+        <field name="name">view.record.balance.dolar.search</field>
+        <field name="model">balance.record.group.dolar</field>
+        <field name="arch" type="xml">
+            <search string="Patients">
+                <!-- <field name="name" filter_domain="['|', ('name', 'ilike', self), ('age_y', 'ilike', self)]"/> -->
+                <field name="account"/>
+                <field name="name"/>
+                
+                <!-- <filter string="Male" name="male" domain="[('gender', '=', 'male')]"/>                
+                <filter string="Female" name="female" domain="[('gender', '=', 'female')]"/> -->
+                <separator/>
+                <!-- <filter string="Note" name="filter_note" domain="[('note', '=', 'NEW Patient Created')]"/>
+                <separator/>
+                <filter string="Archived" name="filter_achived" domain="[('active', '=', False)]"/> -->
+                <group expand="1" string="Group By">
+                    <filter string="Grupo de Cuentas" name="grupo_de_cuentas" context="{'group_by':'account_digit'}"/>
+                    <!-- <filter string="Patient Name" name="patient_name" context="{'group_by':'name'}"/>
+                    <filter string="Responsible" name="responsible_id" context="{'group_by':'responsible_id'}"/> -->
+                </group> 
+            </search>
+        </field>
+    </record> 
+
+
+    <record id="action_report_balance_dolar_view" model="ir.actions.act_window">
+        <field name="name">Registros de Balance Dólar</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">balance.record.group.dolar</field>
+        <field name="view_mode">tree,pivot</field>
+        <field name="context">{'search_default_grupo_de_cuentas': 1}</field>    
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first dollar report!
+            </p>
+        </field>
+    </record>
+
+    
+    <!-- <menuitem id="menu_balance_report_dolar"
+              name="Reporte de Balance Dólares"
+              parent="account_reports.account_reports_audit_reports_menu"
+              action="action_report_balance_dolar_view"
+              sequence="60"/> -->
+
+</odoo>
